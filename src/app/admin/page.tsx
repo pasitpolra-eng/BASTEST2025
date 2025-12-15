@@ -514,7 +514,7 @@ export default function AdminPage() {
                   <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-[12%]">เบอร์โทร</th>
                   <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-[22%]">ปัญหา</th>
                   <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-[12%]">สถานะ</th>
-                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-[18%]">วันที่</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-[18%]">วันที่เดือนปี</th>
                 </tr>
               </thead>
               <tbody>
