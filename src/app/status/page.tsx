@@ -61,7 +61,6 @@ const STATUS_CONFIG = {
   },
 };
 
-// Fuzzy match function - counts matching characters in order
 const fuzzyMatch = (str: string, pattern: string): boolean => {
   const sLower = str.toLowerCase();
   let patternIdx = 0;
@@ -71,14 +70,12 @@ const fuzzyMatch = (str: string, pattern: string): boolean => {
   return patternIdx === pattern.length;
 };
 
-// Normalize function for device ID matching
 const normalize = (s: string) =>
   s
     .toLowerCase()
     .replace(/\s+/g, "")
     .replace(/ร\.พ\.น\.|ร.พ.น\.|rpnn|rpn/g, "");
 
-// Filter function used by both search and polling
 const filterResults = (items: RepairStatus[], query: string): RepairStatus[] => {
   const searchTerm = query.trim();
   
