@@ -373,7 +373,7 @@ export default function AdminPage() {
               className="px-3 py-1 sm:px-4 sm:py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700"
               title="ดาวน์โหลด CSV"
             >
-              📥 ส่งออก
+              บันทึกสถิติ CSV
             </button>
             <button
               type="button"
