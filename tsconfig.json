@@ -15,6 +15,7 @@
     "incremental": true,
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
+    "typeRoots": ["./node_modules/@types"],
     "plugins": [
       {
         "name": "next"
