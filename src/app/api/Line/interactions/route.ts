@@ -88,7 +88,7 @@ export async function POST(req: Request) {
         const jobId = data.split("approve_job:")[1]?.trim();
         const now = new Date().toISOString();
 
-        console.log("🔍 Approving job:", jobId);
+        console.log("Approving job:", jobId);
 
         // Check record exist
         const { data: job, error: findErr } = await supabaseAdmin
@@ -137,9 +137,6 @@ export async function POST(req: Request) {
         }
       }
 
-      // ---------------------------
-      //  HANDLE REJECT JOB
-      // ---------------------------
       if (data.startsWith("reject_job:")) {
         const jobId = data.split("reject_job:")[1]?.trim();
         const now = new Date().toISOString();
@@ -185,7 +182,7 @@ export async function POST(req: Request) {
         }
 
         console.log("✅ Job rejected! New status:", updated?.status);
-        await lineReply(replyToken, `ปฏิเสธงานหมายเลข ${jobId} เรียบร้อยแล้ว ✔`);
+        await lineReply(replyToken, `ปฏิเสธงานหมายเลข ${jobId} เรียบร้อยแล้ว`);
 
         if (adminId) {
           await linePush(adminId, `❌ งาน ${jobId} ปฏิเสธโดย ${userId}`);
