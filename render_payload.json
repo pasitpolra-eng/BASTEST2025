@@ -1,0 +1,16 @@
+{
+  "service": {
+    "name": "bastest2025-web",
+    "repo": "pasitpolra-eng/BASTEST2025",
+    "branch": "main",
+    "type": "web_service",
+    "env": "node",
+    "plan": "free",
+    "buildCommand": "npm run build",
+    "startCommand": "npm start",
+    "envVars": [
+      {"key": "NODE_ENV", "value": "production"},
+      {"key": "NEXT_TELEMETRY_DISABLED", "value": "1"}
+    ]
+  }
+}
