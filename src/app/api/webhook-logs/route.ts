@@ -1,4 +1,3 @@
-// src/app/api/webhook-logs/route.ts
 interface WebhookRequest {
   uuid: string;
   created_at: string;
@@ -21,7 +20,6 @@ export async function GET() {
       );
     }
 
-    // ดึง UUID จาก URL
     const webhookId = webhookUrl.split('/').pop();
     
     if (!webhookId) {
@@ -33,7 +31,6 @@ export async function GET() {
 
     console.log(`📡 Fetching webhook logs from webhook.site/${webhookId}`);
 
-    // ลอง API endpoint ใหม่
     const apiUrl = `https://webhook.site/token/${webhookId}/requests?sorting=-created_at`;
     console.log(`🔗 API URL: ${apiUrl}`);
 
@@ -45,7 +42,7 @@ export async function GET() {
       },
     });
 
-    console.log(`📊 Response status: ${res.status}`);
+    console.log(`Response status: ${res.status}`);
 
     if (!res.ok) {
       const errorText = await res.text();
@@ -62,7 +59,7 @@ export async function GET() {
     }
 
     const responseText = await res.text();
-    console.log(`📥 Raw response: ${responseText.substring(0, 200)}...`);
+    console.log(`Raw response: ${responseText.substring(0, 200)}...`);
 
     let data: WebhookRequest[] | WebhookRequest;
     try {
@@ -78,9 +75,8 @@ export async function GET() {
       );
     }
 
-    console.log(`✅ Retrieved ${Array.isArray(data) ? data.length : 1} webhook request(s)`);
+    console.log(`Retrieved ${Array.isArray(data) ? data.length : 1} webhook request(s)`);
 
-    // แปลงข้อมูลให้อ่านง่ายขึ้น
     const requests = Array.isArray(data) ? data : [data];
     const formatted = requests.map((request: WebhookRequest) => ({
       id: request.uuid,
@@ -105,7 +101,7 @@ export async function GET() {
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("❌ Error fetching webhook logs:", err);
+    console.error("Error fetching webhook logs:", err);
     return new Response(
       JSON.stringify({ 
         error: "Internal server error",

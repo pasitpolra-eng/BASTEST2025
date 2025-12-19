@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/utils/supabase";
@@ -117,48 +116,13 @@ const filterResults = (items: RepairStatus[], query: string): RepairStatus[] => 
 };
 
 export default function StatusPage() {
-  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<RepairStatus[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [newReport, setNewReport] = useState<RepairStatus | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState<RepairStatus | null>(null);
-  const initRef = useRef(false);
-  const pendingSearchRef = useRef<string | null>(null);
   const allDataRef = useRef<RepairStatus[]>([]);
-  const stateRef = useRef({ newReport: null as RepairStatus | null, showSuccess: false });
 
   useEffect(() => {
-    if (!showSuccess) return;
-
-    const timer = setTimeout(() => {
-      setShowSuccess(false);
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [showSuccess]);
-
-  useEffect(() => {
-    if (initRef.current) return;
-    initRef.current = true;
-
-    const lastReport = typeof sessionStorage !== "undefined" ? sessionStorage.getItem("lastReport") : null;
-    const deviceParam = searchParams.get("deviceId");
-
-    if (lastReport) {
-      try {
-        const data = JSON.parse(lastReport) as RepairStatus;
-        stateRef.current = { newReport: data, showSuccess: true };
-        pendingSearchRef.current = data.deviceId;
-        sessionStorage.removeItem("lastReport");
-      } catch (e) {
-        console.error("Failed to parse lastReport", e);
-      }
-    } else if (deviceParam) {
-      pendingSearchRef.current = deviceParam;
-    }
-
     (async () => {
       try {
         const { data, error } = await supabase
@@ -190,25 +154,12 @@ export default function StatusPage() {
         }));
 
         allDataRef.current = transformed;
-
         setResults(transformed);
       } catch (err) {
         console.error("Error loading data:", err);
         setError("ไม่สามารถโหลดข้อมูลจาก Supabase ได้ กรุณาตรวจสอบคอนโซล");
       }
     })();
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (!pendingSearchRef.current) return;
-
-    const query = pendingSearchRef.current;
-    pendingSearchRef.current = null;
-    setSearchQuery(query);
-    setNewReport(stateRef.current.newReport);
-    setShowSuccess(stateRef.current.showSuccess);
-
-    setResults(filterResults(allDataRef.current, query));
   }, []);
 
   useEffect(() => {
@@ -270,16 +221,6 @@ export default function StatusPage() {
       clearInterval(id);
     };
   }, [searchQuery]);
-
-  useEffect(() => {
-    if (!showSuccess) return;
-
-    const timer = setTimeout(() => {
-      setShowSuccess(false);
-    }, 5000); 
-
-    return () => clearTimeout(timer);
-  }, [showSuccess]);
 
   if (selectedDetail) {
     const statusConfig = STATUS_CONFIG[selectedDetail.status];
@@ -443,19 +384,6 @@ export default function StatusPage() {
             <div className="mt-2 text-center text-xs md:text-sm text-rose-500">{error}</div>
           )}
         </div>
-
-        {/* Success */}
-        {showSuccess && newReport && (
-          <div className="mb-4 p-3 md:p-4 rounded-lg bg-emerald-50 border border-emerald-100">
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-xs md:text-sm">
-                <div className="text-emerald-700 font-semibold">✅ แจ้งซ่อมเรียบร้อย</div>
-                <div className="text-gray-700 mt-1">{newReport.deviceId} • {newReport.jobId}</div>
-              </div>
-              <button onClick={() => setShowSuccess(false)} className="px-2 py-1 text-xs rounded bg-white text-gray-700 border">ปิด</button>
-            </div>
-          </div>
-        )}
 
         {/* Results */}
         <div>

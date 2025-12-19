@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/utils/supabase";
 import { PostgrestError } from "@supabase/supabase-js";
@@ -63,6 +63,7 @@ const STATUS_CONFIG = {
 
 export default function StatusContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [repairStatus, setRepairStatus] = useState<RepairStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,8 +77,7 @@ export default function StatusContent() {
     const jobIdParam = searchParams.get("jobId");
 
     if (!jobIdParam) {
-      setLoading(false);
-      setError("No Job ID provided");
+      router.push("/");
       return;
     }
 
@@ -128,7 +128,7 @@ export default function StatusContent() {
     };
 
     fetchRepairStatus();
-  }, [searchParams]);
+  }, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (

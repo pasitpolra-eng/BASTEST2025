@@ -23,12 +23,10 @@ export function useSessionTimeout() {
       setIsWarning(false);
       setTimeLeft(0);
 
-      // Set warning timeout
       warningTimeout = window.setTimeout(() => {
         setIsWarning(true);
         setTimeLeft(Math.round((APP_CONFIG.SESSION_TIMEOUT_MS - APP_CONFIG.SESSION_WARNING_MS) / 1000));
 
-        // Start countdown
         countdownInterval = window.setInterval(() => {
           setTimeLeft((prev) => {
             if (prev <= 1) {
@@ -40,20 +38,17 @@ export function useSessionTimeout() {
         }, 1000);
       }, APP_CONFIG.SESSION_WARNING_MS);
 
-      // Set logout timeout
       logoutTimeout = window.setTimeout(async () => {
         await fetch("/api/admin/logout", { method: "POST" }).catch(() => {});
         router.replace("/admin/login?reason=session-expired");
       }, APP_CONFIG.SESSION_TIMEOUT_MS);
     };
 
-    // Reset on any user activity
     const events = ["mousedown", "keydown", "scroll", "touchstart"];
     const handleActivity = () => resetTimeouts();
 
     events.forEach((event) => document.addEventListener(event, handleActivity));
 
-    // Initial setup
     resetTimeouts();
 
     return () => {

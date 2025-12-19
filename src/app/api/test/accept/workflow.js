@@ -15,7 +15,6 @@ async function testAcceptWorkflow() {
   console.log(`   Job ID: ${testJobId}`);
   console.log(`   Webhook URL: ${BASE_URL}/api/Line/interactions`);
 
-  // Create postback event payload
   const payload = {
     events: [
       {
@@ -33,7 +32,6 @@ async function testAcceptWorkflow() {
 
   const bodyString = JSON.stringify(payload);
   
-  // Generate HMAC signature
   const signature = crypto
     .createHmac('sha256', SECRET)
     .update(bodyString)

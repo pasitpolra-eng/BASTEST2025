@@ -91,7 +91,6 @@ export async function GET() {
     const updates: Array<{ jobId: string; action: string; status: string }> = [];
     const skipped: Array<{ jobId: string; reason: string }> = [];
 
-    // ประมวลผล webhook events
     for (const event of webhookEvents) {
       const eventId = event.uuid || event.id;
       if (!eventId) {

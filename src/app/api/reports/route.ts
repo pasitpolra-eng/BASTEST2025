@@ -104,8 +104,8 @@ type RepairRow = {
   issue?: string;
   status?: string;
   dept_name?: string;
-  dept_building?: string;      // ← Add this
-  dept_floor?: string;         // ← Add this
+  dept_building?: string;    
+  dept_floor?: string;         
   handler_id?: string;
   handler_tag?: string;
   notes?: string;
@@ -305,7 +305,7 @@ export async function POST(req: NextRequest) {
                   paddingAll: "14px",
                   contents: [
                     { type: "text" as const, text: "✅", color: "#ffffff", size: "md" as const, flex: 0 },
-                    { type: "text" as const, text: "งานแล้วเสร็จ\n🏥 โรงพยาบาลนพรัตน์ราชธานี", weight: "bold" as const, color: "#ffffff", size: "sm" as const, wrap: true, margin: "md" as const }
+                    { type: "text" as const, text: "งานเสร็จแล้ว\n🏥 โรงพยาบาลนพรัตน์ราชธานี", weight: "bold" as const, color: "#ffffff", size: "sm" as const, wrap: true, margin: "md" as const }
                   ]
                 },
                 {
@@ -380,7 +380,7 @@ export async function POST(req: NextRequest) {
           const payload = {
             to: LINE_TO,
             messages: [
-              { type: "flex" as const, altText: `งาน ${body.jobId} แล้วเสร็จ`, contents: flexBubble }
+              { type: "flex" as const, altText: `งาน ${body.jobId} เสร็จแล้ว`, contents: flexBubble }
             ]
           };
 
@@ -441,8 +441,7 @@ export async function DELETE(req: NextRequest) {
 
     console.log("[REPORTS] DELETE body received:", JSON.stringify(body));
     
-    // Accept both jobId and id
-    const deleteKey = body?.id || body?.jobId;
+       const deleteKey = body?.id || body?.jobId;
     
     if (!deleteKey) {
       console.error("[REPORTS] Missing both jobId and id in body:", body);
