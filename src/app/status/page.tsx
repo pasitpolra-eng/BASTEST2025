@@ -198,10 +198,10 @@ function StatusPageContent() {
         }
         const data = await res.json();
 
-        const transformed: RepairStatus[] = (data || []).map((item: DatabaseItem) => ({
+        const transformed: RepairStatus[] = (data || []).map((item: DatabaseItem & any) => ({
           jobId: item.job_id,
           deviceId: item.device_id,
-          fullName: item.full_name,
+          fullName: item.full_name || item.name || item.fullName || "",
           deptName: item.dept_name,
           deptBuilding: item.dept_building,
           deptFloor: item.dept_floor,
