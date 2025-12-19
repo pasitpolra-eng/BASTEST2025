@@ -429,7 +429,10 @@ function StatusPageContent() {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <div className="text-xs md:text-sm font-semibold text-gray-800 truncate">{result.jobId}</div>
+                          <div className="flex flex-col min-w-0">
+                            <div className="text-xs md:text-sm font-semibold text-gray-800 truncate">{result.jobId}</div>
+                            <div className="text-xs text-gray-600 truncate">{result.fullName}</div>
+                          </div>
                           <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusCfg.bg} border border-transparent flex-shrink-0`}>
                             {statusCfg.label}
                           </div>
