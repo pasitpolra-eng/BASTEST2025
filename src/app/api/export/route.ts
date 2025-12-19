@@ -168,16 +168,12 @@ export async function GET(req: NextRequest) {
       // Add UTF-8 BOM for Excel to properly recognize Thai characters
       const bom = "\uFEFF";
       const csvWithBom = bom + csv;
-      
-      // Convert to buffer with proper UTF-8 encoding
-      const buffer = Buffer.from(csvWithBom, "utf-8");
 
-      return new NextResponse(buffer, {
+      return new NextResponse(csvWithBom, {
         status: 200,
         headers: {
           "Content-Type": "text/csv; charset=utf-8",
           "Content-Disposition": `attachment; filename="repair_reports_${new Date().getTime()}.csv"`,
-          "Content-Length": buffer.length.toString(),
         },
       });
     }
