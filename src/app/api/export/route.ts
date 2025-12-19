@@ -125,24 +125,27 @@ export async function GET(req: NextRequest) {
     if (format === "csv") {
       const headers = [
         "Job ID",
-        "Name",
-        "Phone",
-        "Department",
-        "Building",
-        "Floor",
-        "Device",
-        "Device ID",
-        "Issue",
-        "Notes",
-        "Status",
-        "Receipt No",
-        "Reject Reason",
-        "Created At",
-        "Updated At",
+        "ID",
+        "ชื่อ",
+        "เบอร์โทรศัพท์",
+        "แผนก",
+        "อาคาร",
+        "ชั้น",
+        "ชนิดอุปกรณ์",
+        "หมายเลขเครื่อง (ร.พ.น.)",
+        "ปัญหา / อาการ",
+        "หมายเหตุ",
+        "สถานะ",
+        "เลขเครื่องที่เสร็จ",
+        "เหตุผลการปฏิเสธ",
+        "วันที่สร้าง",
+        "วันที่อัปเดต",
+        "ผู้ดำเนินการ",
       ];
 
       const rows = filtered.map((r: RepairRequest) => [
         r.job_id || "",
+        r.id || "",
         r.full_name || "",
         r.phone || "",
         r.dept_name || "",
@@ -150,13 +153,14 @@ export async function GET(req: NextRequest) {
         r.dept_floor || "",
         r.device || "",
         r.device_id || "",
-        `"${(r.issue || "").replace(/"/g, '""') }"`, // Escape quotes in CSV
+        `"${(r.issue || "").replace(/"/g, '""')}"`, // Escape quotes in CSV
         `"${(r.notes || "").replace(/"/g, '""')}"`,
-        r.status || "",
+        r.status || "pending",
         r.receipt_no || "",
         r.reject_reason || "",
-        new Date(r.created_at).toLocaleString("th-TH"),
-        new Date(r.updated_at).toLocaleString("th-TH"),
+        r.created_at ? new Date(r.created_at).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" }) : "",
+        r.updated_at ? new Date(r.updated_at).toLocaleString("th-TH", { dateStyle: "short", timeStyle: "short" }) : "",
+        r.handler_tag || r.handler_id || "",
       ]);
 
       const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
