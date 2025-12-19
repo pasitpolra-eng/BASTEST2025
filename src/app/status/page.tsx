@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/utils/supabase";
@@ -116,19 +115,8 @@ const filterResults = (items: RepairStatus[], query: string): RepairStatus[] => 
   });
 };
 
-export default function StatusPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 py-6 md:py-12 px-3 md:px-4 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-4xl mb-4">⏳</div>
-          <div className="text-gray-600">กำลังโหลด...</div>
-        </div>
-      </div>
-    }>
-      <StatusPageContent />
-    </Suspense>
-  );
+export default function Page(): React.ReactElement {
+  return <StatusPageContent />;
 }
 
 function StatusPageContent() {
@@ -198,7 +186,7 @@ function StatusPageContent() {
         }
         const data = await res.json();
 
-        const transformed: RepairStatus[] = (data || []).map((item: DatabaseItem & any) => ({
+        const transformed: RepairStatus[] = (data || []).map((item: Partial<DatabaseItem> & Record<string, unknown>) => ({
           jobId: item.job_id,
           deviceId: item.device_id,
           fullName: item.full_name || item.name || item.fullName || "",
