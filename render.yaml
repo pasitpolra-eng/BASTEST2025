@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: bastest2025
+    env: node
+    plan: free
+    buildCommand: npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_TELEMETRY_DISABLED
+        value: 1
+    routes:
+      - path: /
+        destination: /
