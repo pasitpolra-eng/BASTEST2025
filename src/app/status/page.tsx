@@ -419,7 +419,7 @@ function StatusPageContent() {
                     <div className="flex gap-3">
                       <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
                         <Image
-                          src="/user-avatar.png"
+                          src="/user-avatar.png?v=2"
                           alt="Avatar"
                           width={48}
                           height={48}
