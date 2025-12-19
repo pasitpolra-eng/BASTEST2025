@@ -355,7 +355,7 @@ export async function POST(req: NextRequest) {
                   paddingAll: "14px",
                   margin: "md",
                   contents: [
-                    { type: "text" as const, text: "📋 เลขที่ใบเสร็จ", weight: "bold" as const, color: "#b45309", size: "sm" as const },
+                    { type: "text" as const, text: "📋 เลขเครื่องที่เสร็จ", weight: "bold" as const, color: "#b45309", size: "sm" as const },
                     { type: "text" as const, text: receiptNo, color: "#78350f", size: "md" as const, margin: "md" as const, weight: "bold" as const }
                   ]
                 }] : []),
