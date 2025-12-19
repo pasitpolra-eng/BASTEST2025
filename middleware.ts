@@ -97,6 +97,10 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  if (pathname === "/index.html" || pathname === "") {
+    return NextResponse.rewrite(new URL("/", req.url));
+  }
+
   return NextResponse.next();
 }
 
