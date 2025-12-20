@@ -71,12 +71,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Phone is optional - no validation needed
-
     const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
     const lineUserId = process.env.LINE_USER_ID;
     const notifyToken = process.env.LINE_NOTIFY_TOKEN;
-    const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.APP_URL ?? "https://for-reporting-repairs-to-nopparat.onrender.com/status";
 
     if (!channelAccessToken || !lineUserId) {
       return Response.json({ ok: false, error: "Missing LINE env" }, { status: 500 });
@@ -88,7 +86,6 @@ export async function POST(req: NextRequest) {
 
     const now = new Date().toISOString();
 
-    // Save to Supabase FIRST
     console.log("Saving to Supabase:", { job_id: jobId, full_name: fullName, device_id: deviceId });
     
     const { data: savedData, error: dbError } = await supabaseAdmin
