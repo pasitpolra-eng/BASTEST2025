@@ -94,7 +94,7 @@ export default function RootLayout({
                     href="/repair"
                     className="block text-center px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium shadow text-sm"
                   >
-                    ➕ แจ้งปัญหาใหม่
+                    ➕ แจ้งปัญหา
                   </Link>
 
                   <Link

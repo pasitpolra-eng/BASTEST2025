@@ -24,7 +24,7 @@ export default function App() {
                   href="/repair"
                   className="px-5 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow w-full sm:w-auto text-center"
                 >
-                  ➕ แจ้งปัญหาใหม่
+                  ➕ แจ้งปัญหา
                 </Link>
 
                 <Link
