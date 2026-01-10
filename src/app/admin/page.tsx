@@ -591,7 +591,7 @@ export default function AdminPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-semibold">รายงาน {selectedReport.job_id ?? selectedReport.id}</h2>
-                  <p className="text-sm text-slate-500">สร้างเมื่อ: {formatDate(selectedReport.created_at)}</p>
+                  <p className="text-sm text-slate-500">แจ้งเมื่อ: {formatDate(selectedReport.created_at)}</p>
                 </div>
                 <div>
                   <button type="button" onClick={closeModal} className="text-slate-500 hover:text-slate-800">
