@@ -299,30 +299,30 @@ export default function AdminPage() {
     try {
       const deleteBody = { id: selectedReport.id };
       console.log("Sending delete request with:", deleteBody);
-      
+
       const res = await fetch("/api/reports", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(deleteBody),
         credentials: "include",
       });
-      
+
       console.log("Delete response status:", res.status);
-      
+
       if (!res.ok) {
         const errText = await res.text().catch(() => `HTTP ${res.status}`);
         console.error("Delete failed:", res.status, errText);
         alert(`ลบรายงานล้มเหลว (${res.status}): ${errText.slice(0, 100)}`);
-        setUpdateLoading(false);
         return;
       }
-      
+
       await fetchReports();
       closeModal();
       alert("ลบรายงานเรียบร้อย");
     } catch (err) {
       console.error("Delete error:", err);
       alert("เกิดข้อผิดพลาดในการลบรายงาน");
+    } finally {
       setUpdateLoading(false);
     }
   };
