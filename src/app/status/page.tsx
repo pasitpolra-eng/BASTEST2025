@@ -19,6 +19,7 @@ type RepairStatus = {
   createdAt: string;
   updatedAt: string;
   notes?: string;
+  reject_reason?: string | null;
 };
 
 type DatabaseItem = {
@@ -35,6 +36,7 @@ type DatabaseItem = {
   created_at: string;
   updated_at: string;
   notes?: string;
+  reject_reason?: string | null;
 };
 
 const STATUS_CONFIG = {
@@ -155,6 +157,7 @@ function StatusPageContent() {
             ? new Date(item.updated_at).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
             : "",
           notes: item.notes,
+          reject_reason: item.reject_reason,
         }));
 
         allDataRef.current = transformed;
@@ -204,6 +207,7 @@ function StatusPageContent() {
             ? new Date(item.updated_at).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
             : "",
           notes: item.notes,
+          reject_reason: item.reject_reason,
         }));
 
         if (!mounted) return;
@@ -265,6 +269,12 @@ function StatusPageContent() {
                   <div className="mt-3 p-2 md:p-3 bg-emerald-50 rounded-md border border-emerald-100">
                     <div className="text-xs text-emerald-700 font-medium">หมายเหตุ</div>
                     <div className="text-xs md:text-sm text-emerald-800 mt-1">{selectedDetail.notes}</div>
+                  </div>
+                )}
+                {selectedDetail.status === "rejected" && selectedDetail.reject_reason && (
+                  <div className="mt-3 p-2 md:p-3 bg-red-50 rounded-md border border-red-100">
+                    <div className="text-xs text-red-700 font-medium">เหตุผลการปฏิเสธ</div>
+                    <div className="text-xs md:text-sm text-red-800 mt-1">{selectedDetail.reject_reason}</div>
                   </div>
                 )}
               </div>

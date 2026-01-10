@@ -20,6 +20,7 @@ type DatabaseItem = {
   created_at: string;
   updated_at: string;
   notes?: string;
+  reject_reason?: string | null;
 };
 
 type RepairStatus = {
@@ -36,6 +37,7 @@ type RepairStatus = {
   createdAt: string;
   updatedAt: string;
   notes?: string;
+  reject_reason?: string | null;
 };
 
 const STATUS_CONFIG = {
@@ -114,6 +116,7 @@ export default function StatusContent() {
             createdAt: data.created_at,
             updatedAt: data.updated_at,
             notes: data.notes,
+            reject_reason: data.reject_reason,
           };
           setRepairStatus(convertedData);
         }
@@ -256,6 +259,17 @@ export default function StatusContent() {
             </div>
           </div>
 
+          {repairStatus.status === "rejected" && repairStatus.reject_reason && (
+            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <label className="text-sm text-red-700 uppercase tracking-wide font-semibold">
+                เหตุผลการปฏิเสธ
+              </label>
+              <p className="text-red-800 text-base leading-relaxed mt-2">
+                {repairStatus.reject_reason}
+              </p>
+            </div>
+          )}
+
           <div className="mb-6">
             <label className="text-sm text-gray-500 uppercase tracking-wide">
               ปัญหา
@@ -272,6 +286,17 @@ export default function StatusContent() {
               </label>
               <p className="text-gray-800 text-base leading-relaxed mt-2">
                 {repairStatus.notes}
+              </p>
+            </div>
+          )}
+
+          {repairStatus.status === "rejected" && repairStatus.reject_reason && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <label className="text-sm text-red-700 uppercase tracking-wide font-semibold">
+                เหตุผลการปฏิเสธ
+              </label>
+              <p className="text-red-800 text-base leading-relaxed mt-2">
+                {repairStatus.reject_reason}
               </p>
             </div>
           )}
