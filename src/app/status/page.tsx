@@ -46,17 +46,17 @@ const STATUS_CONFIG = {
     icon: "⏳",
   },
   "in-progress": {
-    label: "ยืนยันรับงานแล้ว",
+    label: "กำลังดำเนินการ",
     bg: "bg-amber-100 text-amber-800",
     icon: "🔧",
   },
   completed: {
-    label: "เสร็จแล้ว",
+    label: "เสร็จสิ้น",
     bg: "bg-emerald-100 text-emerald-800",
     icon: "✅",
   },
   rejected: {
-    label: "ไม่รับงาน",
+    label: "ถูกปฏิเสธ",
     bg: "bg-rose-100 text-rose-800",
     icon: "❌",
   },
