@@ -41,7 +41,7 @@ type DatabaseItem = {
 
 const STATUS_CONFIG = {
   pending: {
-    label: "รอรับงาน",
+    label: "รอรับงานดำเนินการ",
     bg: "bg-yellow-100 text-yellow-800",
     icon: "⏳",
   },
@@ -51,7 +51,7 @@ const STATUS_CONFIG = {
     icon: "🔧",
   },
   completed: {
-    label: "แล้วเสร็จ",
+    label: "เสร็จแล้ว",
     bg: "bg-emerald-100 text-emerald-800",
     icon: "✅",
   },
@@ -248,7 +248,7 @@ function StatusPageContent() {
                   onClick={() => setSelectedDetail(null)}
                   className="text-gray-500 hover:text-gray-800 text-lg md:hidden"
                 >
-                  ✕
+                  ปิด
                 </button>
               </div>
             </div>
