@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
     const lineUserId = process.env.LINE_USER_ID;
     const notifyToken = process.env.LINE_NOTIFY_TOKEN;
-    const appUrl = process.env.APP_URL ?? "https://for-reporting-repairs-to-nopparat.onrender.com/";
+    const appUrl = process.env.APP_URL ?? "https://it-support-for-nopparat-rajathanee.onrender.com/";
 
     if (!channelAccessToken || !lineUserId) {
       return Response.json({ ok: false, error: "Missing LINE env" }, { status: 500 });
