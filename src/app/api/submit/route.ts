@@ -9,32 +9,6 @@ if (!url || !serviceKey) {
 
 const supabaseAdmin = createClient(String(url), String(serviceKey), { auth: { persistSession: false } });
 
-const createCompactInfo = (icon: string, label: string, value: string) => ({
-  type: "box" as const,
-  layout: "horizontal" as const,
-  spacing: "sm" as const,
-  contents: [
-    {
-      type: "box" as const,
-      layout: "horizontal" as const,
-      contents: [
-        { type: "text" as const, text: icon, color: "#94a3b8", size: "sm" as const, flex: 0, align: "center" as const },
-        { type: "text" as const, text: label, color: "#475569", size: "xs" as const, weight: "bold" as const, flex: 1, margin: "sm" as const, align: "start" as const }
-      ],
-      flex: 2
-    },
-    {
-      type: "text" as const,
-      text: value,
-      color: "#1e293b",
-      size: "sm" as const,
-      wrap: true,
-      flex: 3,
-      align: "end" as const
-    }
-  ]
-});
-
 export async function POST(req: NextRequest) {
   try {
     const {
@@ -74,7 +48,6 @@ export async function POST(req: NextRequest) {
     const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
     const lineUserId = process.env.LINE_USER_ID;
     const notifyToken = process.env.LINE_NOTIFY_TOKEN;
-    const appUrl = process.env.APP_URL ?? "https://it-support-for-nopparat-rajathanee.onrender.com/";
 
     if (!channelAccessToken || !lineUserId) {
       return Response.json({ ok: false, error: "Missing LINE env" }, { status: 500 });
@@ -125,91 +98,133 @@ export async function POST(req: NextRequest) {
 
     console.log("Supabase save SUCCESS:", savedData);
 
-    const summaryText =
-      `🛠️ แจ้งซ่อมจากระบบออนไลน์\n\n` +
-      `👤 ผู้แจ้ง: ${fullName || "-"}
-       🏢 แผนก: ${deptName || "-"} (${deptBuilding || "-"} ชั้น ${deptFloor || "-"})
-       💻 อุปกรณ์: ${device || "-"} (${deviceId || "-"})
-       📞 ติดต่อ: ${phone || "-"}
-       📝 อาการ: ${issue || "-"}
-       📌 หมายเหตุ: ${notes || "-"}
-       🆔 Job ID: ${jobId}`;
-
     const flexBubble = {
       type: "bubble" as const,
       body: {
         type: "box" as const,
         layout: "vertical" as const,
+        spacing: "none" as const,
         paddingAll: "0px",
         contents: [
           {
-            type: "box" as const, layout: "horizontal" as const, backgroundColor: "#7c3aed", paddingAll: "14px",
+            type: "box" as const,
+            layout: "vertical" as const,
+            spacing: "sm" as const,
+            paddingAll: "16px",
+            backgroundColor: "#7c3aed",
             contents: [
-              { type: "text" as const, text: "🏥", color: "#ffffff", size: "md" as const, flex: 0 },
-              { type: "text" as const, text: "โรงพยาบาลนพรัตน์ราชธานี\n🛠️ แจ้งซ่อมใหม่", weight: "bold" as const, color: "#ffffff", size: "sm" as const, wrap: true, margin: "md" as const }
+              { type: "text" as const, text: "🏥 โรงพยาบาลนพรัตน์ราชธานี", color: "#ffffff", weight: "bold" as const, size: "lg" as const },
+              { type: "text" as const, text: "🔧 แจ้งซ่อมใหม่", color: "#f3e8ff", size: "sm" as const, margin: "sm" as const }
             ]
           },
           {
-            type: "box" as const, layout: "vertical" as const, paddingAll: "14px", spacing: "sm" as const,
+            type: "box" as const,
+            layout: "vertical" as const,
+            margin: "md" as const,
+            paddingAll: "16px",
+            spacing: "md" as const,
             contents: [
-              { type: "text" as const, text: "🆔 Job ID", weight: "bold" as const, color: "#7c3aed", size: "sm" as const },
-              { type: "text" as const, text: jobId, color: "#333333", size: "md" as const, wrap: true }
-            ]
-          },
-          { type: "separator" as const, margin: "none" as const, color: "#f3f4f6" },
-          {
-            type: "box" as const, layout: "vertical" as const, paddingAll: "14px", spacing: "lg" as const,
-            contents: [
-              createCompactInfo("👤", "ผู้แจ้ง", fullName || "-"),
-              { type: "separator" as const, margin: "md" as const, color: "#f3f4f6" },
-              createCompactInfo("🏢", "แผนก", deptName || "-"),
-              { type: "separator" as const, margin: "md" as const, color: "#f3f4f6" },
-              createCompactInfo("📍", "สถานที่", `${deptBuilding || "-"} ชั้น ${deptFloor || "-"}`),
-              { type: "separator" as const, margin: "md" as const, color: "#f3f4f6" },
-              createCompactInfo("💻", "อุปกรณ์ที่เสีย", device || "-"),
-              { type: "separator" as const, margin: "md" as const, color: "#f3f4f6" },
-              createCompactInfo("🔢", "หมายเลขเครื่อง", deviceId || "-"),
-              { type: "separator" as const, margin: "md" as const, color: "#f3f4f6" },
-              createCompactInfo("📞", "เบอร์ติดต่อ", phone || "-"),
-            ]
-          },
-          {
-            type: "box" as const, layout: "vertical" as const, backgroundColor: "#fef3c7", paddingAll: "14px",
-            contents: [
-              { type: "text" as const, text: "❗ อาการ / รายละเอียด", weight: "bold" as const, color: "#b45309", size: "sm" as const },
-              { type: "text" as const, text: issue ? (issue.length > 300 ? issue.slice(0, 297) + "..." : issue) : "-", color: "#78350f", size: "sm" as const, wrap: true, margin: "md" as const }
-            ]
-          },
-          {
-            type: "box" as const, layout: "vertical" as const, backgroundColor: "#dbeafe", paddingAll: "14px",
-            contents: [
-              { type: "text" as const, text: "📌 หมายเหตุ", weight: "bold" as const, color: "#0c4a6e", size: "sm" as const },
-              { type: "text" as const, text: notes ? (notes.length > 300 ? notes.slice(0, 297) + "..." : notes) : "(ไม่มี)", color: "#164e63", size: "sm" as const, wrap: true, margin: "md" as const }
+              {
+                type: "box" as const,
+                layout: "vertical" as const,
+                spacing: "sm" as const,
+                contents: [
+                  {
+                    type: "box" as const,
+                    layout: "horizontal" as const,
+                    spacing: "sm" as const,
+                    contents: [
+                      { type: "text" as const, text: "👤 ผู้แจ้ง", color: "#666666", size: "sm" as const, flex: 1 },
+                      { type: "text" as const, text: fullName || "-", color: "#111111", size: "sm" as const, align: "end" as const, flex: 2, weight: "bold" as const }
+                    ]
+                  },
+                  {
+                    type: "box" as const,
+                    layout: "horizontal" as const,
+                    spacing: "sm" as const,
+                    contents: [
+                      { type: "text" as const, text: "🏢 แผนก", color: "#666666", size: "sm" as const, flex: 1 },
+                      { type: "text" as const, text: deptName || "-", color: "#111111", size: "sm" as const, align: "end" as const, flex: 2 }
+                    ]
+                  },
+                  {
+                    type: "box" as const,
+                    layout: "horizontal" as const,
+                    spacing: "sm" as const,
+                    contents: [
+                      { type: "text" as const, text: "📍 สถานที่", color: "#666666", size: "sm" as const, flex: 1 },
+                      { type: "text" as const, text: `${deptBuilding || "-"} ชั้น ${deptFloor || "-"}`, color: "#111111", size: "sm" as const, align: "end" as const, flex: 2 }
+                    ]
+                  },
+                  {
+                    type: "box" as const,
+                    layout: "horizontal" as const,
+                    spacing: "sm" as const,
+                    contents: [
+                      { type: "text" as const, text: "💻 อุปกรณ์", color: "#666666", size: "sm" as const, flex: 1 },
+                      { type: "text" as const, text: device || "-", color: "#111111", size: "sm" as const, align: "end" as const, flex: 2 }
+                    ]
+                  },
+                  {
+                    type: "box" as const,
+                    layout: "horizontal" as const,
+                    spacing: "sm" as const,
+                    contents: [
+                      { type: "text" as const, text: "🔢 หมายเลข", color: "#666666", size: "sm" as const, flex: 1 },
+                      { type: "text" as const, text: deviceId || "-", color: "#111111", size: "sm" as const, align: "end" as const, flex: 2 }
+                    ]
+                  },
+                  {
+                    type: "box" as const,
+                    layout: "horizontal" as const,
+                    spacing: "sm" as const,
+                    contents: [
+                      { type: "text" as const, text: "📞 เบอร์ติดต่อ", color: "#666666", size: "sm" as const, flex: 1 },
+                      { type: "text" as const, text: phone || "-", color: "#111111", size: "sm" as const, align: "end" as const, flex: 2 }
+                    ]
+                  }
+                ]
+              },
+              { type: "separator" as const, margin: "md" as const },
+              {
+                type: "box" as const,
+                layout: "vertical" as const,
+                backgroundColor: "#fef3c7",
+                paddingAll: "12px",
+                cornerRadius: "md" as const,
+                spacing: "sm" as const,
+                contents: [
+                  { type: "text" as const, text: "❗ อาการ / รายละเอียด", color: "#b45309", weight: "bold" as const, size: "sm" as const },
+                  { type: "text" as const, text: issue || "-", color: "#78350f", size: "sm" as const, wrap: true }
+                ]
+              },
+              {
+                type: "box" as const,
+                layout: "vertical" as const,
+                backgroundColor: "#dbeafe",
+                paddingAll: "12px",
+                cornerRadius: "md" as const,
+                spacing: "sm" as const,
+                contents: [
+                  { type: "text" as const, text: "📌 หมายเหตุ", color: "#0c4a6e", weight: "bold" as const, size: "sm" as const },
+                  { type: "text" as const, text: notes || "(ไม่มี)", color: "#164e63", size: "sm" as const, wrap: true }
+                ]
+              }
             ]
           }
         ]
-      },
-      footer: {
-        type: "box" as const, layout: "vertical" as const, spacing: "sm" as const,
-        contents: [
-          { type: "button" as const, style: "primary" as const, color: "#16a34a", action: { type: "postback" as const, label: "✓ ยืนยันรับบริการ (Accept)", data: `approve_job:${jobId}` } },
-          { type: "button" as const, style: "secondary" as const, color: "#dc2626", action: { type: "postback" as const, label: "✗ ไม่สามารถดำเนินการได้ (Reject)", data: `reject_job:${jobId}` } },
-          { type: "button" as const, style: "link" as const, color: "#0369a1", action: { type: "uri" as const, label: "🌐 ตรวจสอบสถานะการบริการ", uri: `${appUrl.replace(/\/+$/, "")}/status?jobId=${encodeURIComponent(jobId)}` } }
-        ],
-        backgroundColor: "#f1f5f9", paddingAll: "12px"
       }
     };
 
     const payload = {
       to: lineUserId,
       messages: [
-        { type: "flex" as const, altText: `แจ้งซ่อม Job ${jobId}`, contents: flexBubble }
+        { type: "flex" as const, altText: `แจ้งซ่อมใหม่ - ${fullName}`, contents: flexBubble }
       ]
     };
 
     let pushSent = false;
-    let pushStatus: number | null = null;
-    let pushError: string | null = null;
+    let notifySent = false;
 
     try {
       const pushRes = await fetch("https://api.line.me/v2/bot/message/push", {
@@ -218,21 +233,25 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify(payload),
       });
 
-      pushStatus = pushRes.status;
-      if (!pushRes.ok) {
-        pushError = `LINE push failed: ${pushStatus}`;
-        console.error(pushError);
-      } else {
+      if (pushRes.ok) {
         pushSent = true;
+        console.log("[LINE] Flex message sent successfully");
+      } else {
+        console.error("[LINE] Push failed:", pushRes.status);
       }
     } catch (err) {
-      pushError = String(err);
-      console.error("LINE push exception:", err);
+      console.error("[LINE] Push exception:", err);
     }
 
-    let notifySent = false;
-
     if (!pushSent && notifyToken) {
+      const summaryText =
+        `🛠️ แจ้งซ่อมใหม่\n\n` +
+        `👤 ผู้แจ้ง: ${fullName || "-"}\n` +
+        `🏢 แผนก: ${deptName || "-"}\n` +
+        `💻 อุปกรณ์: ${device || "-"}\n` +
+        `📞 เบอร์: ${phone || "-"}\n` +
+        `📝 อาการ: ${issue || "-"}`;
+
       try {
         const notifyRes = await fetch("https://notify-api.line.me/api/notify", {
           method: "POST",
@@ -241,9 +260,10 @@ export async function POST(req: NextRequest) {
         });
         if (notifyRes.ok) {
           notifySent = true;
+          console.log("[LINE Notify] Notification sent successfully");
         }
       } catch (err) {
-        console.error("LINE Notify exception:", err);
+        console.error("[LINE Notify] Exception:", err);
       }
     }
 

@@ -20,6 +20,8 @@ type RepairStatus = {
   updatedAt: string;
   notes?: string;
   reject_reason?: string | null;
+  handler_tag?: string | null;
+  receipt_no?: string | null;
 };
 
 type DatabaseItem = {
@@ -37,6 +39,8 @@ type DatabaseItem = {
   updated_at: string;
   notes?: string;
   reject_reason?: string | null;
+  handler_tag?: string | null;
+  receipt_no?: string | null;
 };
 
 const STATUS_CONFIG = {
@@ -158,6 +162,8 @@ function StatusPageContent() {
             : "",
           notes: item.notes,
           reject_reason: item.reject_reason,
+          handler_tag: item.handler_tag,
+          receipt_no: item.receipt_no,
         }));
 
         allDataRef.current = transformed;
@@ -208,6 +214,8 @@ function StatusPageContent() {
             : "",
           notes: item.notes,
           reject_reason: item.reject_reason,
+          handler_tag: item.handler_tag,
+          receipt_no: item.receipt_no,
         }));
 
         if (!mounted) return;
@@ -238,8 +246,8 @@ function StatusPageContent() {
           <div className="p-4 md:p-6">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4 mb-4">
               <div className="flex-1">
-                <div className="text-xs text-gray-500 mb-1">Job ID</div>
-                <div className="text-lg md:text-2xl font-semibold text-gray-800">{selectedDetail.jobId}</div>
+                <div className="text-xs text-gray-500 mb-1">ผู้แจ้ง</div>
+                <div className="text-lg md:text-2xl font-semibold text-gray-800">{selectedDetail.fullName}</div>
                 <div className="mt-2 text-xs md:text-sm text-gray-600">{selectedDetail.device} • {selectedDetail.deviceId}</div>
               </div>
               <div className="flex items-center justify-between md:flex-col md:items-end gap-2">
@@ -253,30 +261,49 @@ function StatusPageContent() {
               </div>
             </div>
 
-            <div className="text-xs md:text-sm text-gray-500 mb-4">
-              {selectedDetail.fullName && <div>{selectedDetail.fullName}</div>}
-              {selectedDetail.deptName && <div>{selectedDetail.deptName}</div>}
-              {selectedDetail.deptBuilding && <div>{selectedDetail.deptBuilding} | ชั้น {selectedDetail.deptFloor || "—"}</div>}
-              {selectedDetail.phone && <div>{selectedDetail.phone}</div>}
-              <div className="mt-1 text-gray-400">อัปเดต: {selectedDetail.updatedAt}</div>
+            <div className="text-xs md:text-sm text-gray-600 mb-4 space-y-1">
+              <div className="flex flex-col md:flex-row md:gap-4">
+                <div className="flex-1">
+                  {selectedDetail.deptName && <div><span className="font-medium">แผนก:</span> {selectedDetail.deptName}</div>}
+                  {selectedDetail.deptBuilding && <div><span className="font-medium">สถานที่:</span> {selectedDetail.deptBuilding} ชั้น {selectedDetail.deptFloor || "—"}</div>}
+                  {selectedDetail.phone && <div><span className="font-medium">เบอร์:</span> {selectedDetail.phone}</div>}
+                </div>
+                <div className="flex-1">
+                  {selectedDetail.handler_tag && <div className="text-emerald-700 font-medium">👤 ผู้รับงาน: {selectedDetail.handler_tag}</div>}
+                  {selectedDetail.receipt_no && <div className="text-blue-700 font-medium">📄 เครื่องที่เสร็จสิ้น: {selectedDetail.receipt_no}</div>}
+                  <div className="text-gray-400 text-xs mt-1">อัปเดต: {selectedDetail.updatedAt}</div>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 mb-4">
               <div className="bg-gray-50 p-3 md:p-4 rounded-xl border border-gray-100">
-                <div className="text-xs text-gray-500 mb-2 font-medium">ปัญหา</div>
-                <div className="text-sm md:text-base text-gray-800 leading-relaxed">{selectedDetail.issue}</div>
-                {selectedDetail.notes && (
-                  <div className="mt-3 p-2 md:p-3 bg-emerald-50 rounded-md border border-emerald-100">
-                    <div className="text-xs text-emerald-700 font-medium">หมายเหตุ</div>
-                    <div className="text-xs md:text-sm text-emerald-800 mt-1">{selectedDetail.notes}</div>
+                <div className="text-xs text-gray-500 mb-2 font-medium">รายละเอียดอาการ</div>
+                <div className="text-sm md:text-base text-gray-800 leading-relaxed mb-3">{selectedDetail.issue}</div>
+                
+                <div className="space-y-2">
+                  <div className="text-xs text-gray-600">
+                    <span className="font-medium">อุปกรณ์:</span> {selectedDetail.device} ({selectedDetail.deviceId})
                   </div>
-                )}
-                {selectedDetail.status === "rejected" && selectedDetail.reject_reason && (
-                  <div className="mt-3 p-2 md:p-3 bg-red-50 rounded-md border border-red-100">
-                    <div className="text-xs text-red-700 font-medium">เหตุผลการปฏิเสธ</div>
-                    <div className="text-xs md:text-sm text-red-800 mt-1">{selectedDetail.reject_reason}</div>
-                  </div>
-                )}
+                  {selectedDetail.notes && (
+                    <div className="p-2 md:p-3 bg-emerald-50 rounded-md border border-emerald-100">
+                      <div className="text-xs text-emerald-700 font-medium">หมายเหตุ</div>
+                      <div className="text-xs md:text-sm text-emerald-800 mt-1">{selectedDetail.notes}</div>
+                    </div>
+                  )}
+                  {selectedDetail.status === "rejected" && selectedDetail.reject_reason && (
+                    <div className="p-2 md:p-3 bg-red-50 rounded-md border border-red-100">
+                      <div className="text-xs text-red-700 font-medium">เหตุผลการปฏิเสธ</div>
+                      <div className="text-xs md:text-sm text-red-800 mt-1">{selectedDetail.reject_reason}</div>
+                    </div>
+                  )}
+                  {selectedDetail.handler_tag && selectedDetail.status === "completed" && (
+                    <div className="p-2 md:p-3 bg-blue-50 rounded-md border border-blue-100">
+                      <div className="text-xs text-blue-700 font-medium">ผู้ดำเนินการ</div>
+                      <div className="text-xs md:text-sm text-blue-800 mt-1">{selectedDetail.handler_tag}</div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="bg-gray-50 p-3 md:p-4 rounded-xl border border-gray-100">
@@ -316,7 +343,7 @@ function StatusPageContent() {
                 แจ้งซ่อมใหม่
               </Link>
               <div className="text-xs text-gray-500 text-center mt-2">
-                การยืนยันรับงานทำได้ผ่าน LINE เจ้าหน้าเท่านั้น — ติดต่อ IT Support: <a href="tel:7671" className="font-medium hover:underline">7671</a>
+                การยืนยันรับงานทำได้ผ่าน Admin dashboard เจ้าหน้าเท่านั้น — ติดต่อ IT Support: <a href="tel:7671" className="font-medium hover:underline">7671</a>
               </div>
             </div>
           </div>
@@ -342,7 +369,7 @@ function StatusPageContent() {
             </div>
             <div className="flex-1">
               <h1 className="text-2xl md:text-4xl font-extrabold text-gray-800">สถานะงาน</h1>
-              <p className="text-xs md:text-base text-gray-600 mt-1">ค้นหาด้วยเลข ร.พ.น. หรือ Job ID</p>
+              <p className="text-xs md:text-base text-gray-600 mt-1">ค้นหาด้วยเลข ร.พ.น. ชื่อผู้แจ้ง หรือ Job ID</p>
             </div>
           </div>
           
@@ -365,7 +392,7 @@ function StatusPageContent() {
                 if (e.key === "Enter") {
                   const q = searchQuery.trim();
                   if (!q) {
-                    setError("กรุณาใส่เลข ร.พ.น. หรือ Job ID");
+                    setError("กรุณาใส่เลข ร.พ.น. ชื่อผู้แจ้ง หรือ Job ID");
                     return;
                   }
                   setError(null);
@@ -373,7 +400,7 @@ function StatusPageContent() {
                   setResults(filterResults(allDataRef.current, q));
                 }
               }}
-              placeholder="ร.พ.น. หรือ Job ID..."
+              placeholder="ร.พ.น. ชื่อผู้แจ้ง หรือ Job ID..."
               className="w-full rounded-lg py-2 md:py-3 px-3 md:px-4 bg-white border border-gray-200 placeholder:text-gray-400 text-sm md:text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-300 transition shadow-sm"
             />
 
@@ -381,7 +408,7 @@ function StatusPageContent() {
               onClick={() => {
                 const q = searchQuery.trim();
                 if (!q) {
-                  setError("กรุณาใส่เลข ร.พ.น. หรือ Job ID");
+                  setError("กรุณาใส่เลข ร.พ.น. ชื่อผู้แจ้ง หรือ Job ID");
                   return;
                 }
                 setError(null);

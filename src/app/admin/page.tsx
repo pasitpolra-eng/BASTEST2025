@@ -56,14 +56,15 @@ interface UpdateBody {
 
 const formatDate = (dateString: string) =>
   new Date(dateString).toLocaleString("th-TH", {
-    dateStyle: "short",
+    dateStyle: "medium",
     timeStyle: "short",
+    timeZone: "Asia/Bangkok",
   });
 
 const DetailItem: React.FC<{ label: string; value?: string; children?: React.ReactNode }> = ({ label, value, children }) => (
-  <div className="space-y-1">
-    <p className="text-xs text-slate-500 font-semibold uppercase tracking-widest">{label}</p>
-    {children ? children : <p className="text-sm text-slate-900 font-medium">{value}</p>}
+  <div className="space-y-0.5">
+    <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">{label}</p>
+    {children ? children : <p className="text-xs text-slate-900 font-medium">{value}</p>}
   </div>
 );
 
@@ -76,6 +77,7 @@ export default function AdminPage() {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [completedReceiptNo, setCompletedReceiptNo] = useState("");
   const [rejectedReason, setRejectedReason] = useState("");
+  const [handlerName, setHandlerName] = useState("");
   const [completionSuccess, setCompletionSuccess] = useState<Report | null>(null);
 
   const intervalRef = useRef<number | null>(null);
@@ -122,6 +124,7 @@ export default function AdminPage() {
   useEffect(() => {
     setRejectedReason("");
     setCompletedReceiptNo("");
+    setHandlerName("");
   }, [selectedReport]);
 
   const handleLogout = async () => {
@@ -161,6 +164,7 @@ export default function AdminPage() {
     setSelectedReport(null);
     setCompletedReceiptNo("");
     setRejectedReason("");
+    setHandlerName("");
   };
 
   const updateReportStatus = async (newStatus: Report["status"], metadata?: Record<string, string>) => {
@@ -294,7 +298,7 @@ export default function AdminPage() {
 
   const deleteReport = async () => {
     if (!selectedReport) return;
-    if (!window.confirm("คุณแน่ใจหรือว่าต้องการลบรายงานนี้")) return;
+    if (!window.confirm("คุณแน่ใจหรือว่าต้องการลบผู้แจ้งปัญหานี้")) return;
     setUpdateLoading(true);
     try {
       const deleteBody = { id: selectedReport.id };
@@ -312,16 +316,16 @@ export default function AdminPage() {
       if (!res.ok) {
         const errText = await res.text().catch(() => `HTTP ${res.status}`);
         console.error("Delete failed:", res.status, errText);
-        alert(`ลบรายงานล้มเหลว (${res.status}): ${errText.slice(0, 100)}`);
+        alert(`ลบผู้แจ้งปัญหาล้มเหลว (${res.status}): ${errText.slice(0, 100)}`);
         return;
       }
 
       await fetchReports();
       closeModal();
-      alert("ลบรายงานเรียบร้อย");
+      alert("ลบผู้แจ้งปัญหาเรียบร้อย");
     } catch (err) {
       console.error("Delete error:", err);
-      alert("เกิดข้อผิดพลาดในการลบรายงาน");
+      alert("เกิดข้อผิดพลาดในการลบผู้แจ้งปัญหา");
     } finally {
       setUpdateLoading(false);
     }
@@ -393,7 +397,7 @@ export default function AdminPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h3 className="text-lg font-bold text-emerald-900 mb-3">
-                  ✅ งาน {completionSuccess.job_id} เสร็จเรียบร้อย
+                  ✅ งาน {completionSuccess.name} เสร็จเรียบร้อย
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-emerald-800">
                   <div>
@@ -412,8 +416,14 @@ export default function AdminPage() {
                   )}
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">เวลา</p>
-                    <p className="font-medium">{new Date().toLocaleString("th-TH")}</p>
+                    <p className="font-medium">{new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })}</p>
                   </div>
+                  {completionSuccess.handler_tag && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">ผู้รับงาน</p>
+                      <p className="font-medium">{completionSuccess.handler_tag}</p>
+                    </div>
+                  )}
                 </div>
               </div>
               <button
@@ -522,7 +532,7 @@ export default function AdminPage() {
                   const cfg = getStatusConfig(r.status);
                   return (
                     <tr key={r.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => setSelectedReport(r)}>
-                      <td className="px-3 py-3 align-top font-mono text-sm text-slate-700">{r.job_id ?? r.id}</td>
+                      <td className="px-3 py-3 align-top font-mono text-sm text-slate-700">{r.name}</td>
                       <td className="px-3 py-3 align-top">
                         <div className="font-medium text-slate-900">{r.name}</div>
                         <div className="text-xs text-slate-500">{r.dept_name}</div>
@@ -543,7 +553,7 @@ export default function AdminPage() {
                 {filteredReports.length === 0 && (
                   <tr>
                     <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
-                      ไม่พบรายงาน
+                      ไม่พบผู้แจ้งปัญหา
                     </td>
                   </tr>
                 )}
@@ -563,7 +573,7 @@ export default function AdminPage() {
                     className="w-full text-left bg-white border border-slate-100 rounded-lg p-3 shadow-sm flex items-start justify-between gap-3"
                   >
                     <div className="min-w-0">
-                      <div className="text-sm font-mono text-slate-700 mb-1 truncate">{r.job_id ?? r.id}</div>
+                      <div className="text-sm font-mono text-slate-700 mb-1 truncate">{r.name}</div>
                       <div className="font-medium text-slate-900 truncate">{r.name}</div>
                       <div className="text-xs text-slate-500 truncate">{r.dept_name}</div>
                       <div className="text-xs text-slate-600 mt-1">{r.dept_building || "-"} ชั้น {r.dept_floor || "-"}</div>
@@ -578,7 +588,7 @@ export default function AdminPage() {
                 );
               })
             ) : (
-              <div className="text-center py-6 text-slate-500">ไม่พบรายงาน</div>
+              <div className="text-center py-6 text-slate-500">ไม่พบผู้แจ้งปัญหา</div>
             )}
           </div>
         </section>
@@ -587,21 +597,21 @@ export default function AdminPage() {
         {selectedReport && (
           <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4 md:p-6">
             <div className="fixed inset-0 bg-black/40" onClick={closeModal} />
-            <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white rounded-lg shadow-lg p-4 md:p-6 z-10">
-              <div className="flex items-start justify-between gap-4">
+            <div className="relative w-full max-w-4xl max-h-[95vh] overflow-y-auto bg-white rounded-lg shadow-lg p-3 md:p-4 z-10">
+              <div className="flex items-start justify-between gap-2 mb-2 pb-2 border-b border-slate-200">
                 <div>
-                  <h2 className="text-xl font-semibold">รายงาน {selectedReport.job_id ?? selectedReport.id}</h2>
-                  <p className="text-sm text-slate-500">แจ้งเมื่อ: {formatDate(selectedReport.created_at)}</p>
+                  <p className="text-xs text-slate-500 font-semibold">ผู้แจ้งปัญหา</p>
+                  <h2 className="text-lg font-bold text-slate-900">{selectedReport.name}</h2>
+                  <p className="text-xs text-slate-500 mt-1">{formatDate(selectedReport.created_at)}</p>
                 </div>
                 <div>
-                  <button type="button" onClick={closeModal} className="text-slate-500 hover:text-slate-800">
+                  <button type="button" onClick={closeModal} className="text-slate-500 hover:text-slate-800 flex-shrink-0">
                     ❌
                   </button>
                 </div>
               </div>
 
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <DetailItem label="ชื่อ">{selectedReport.name}</DetailItem>
+              <div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
                 <DetailItem label="เบอร์โทรศัพท์">{selectedReport.phone}</DetailItem>
                 <DetailItem label="แผนก">{selectedReport.dept_name}</DetailItem>
                 <DetailItem label="อาคาร">{selectedReport.dept_building || "-"}</DetailItem>
@@ -612,45 +622,55 @@ export default function AdminPage() {
                 <DetailItem label="หมายเหตุ">{selectedReport.notes || "-"}</DetailItem>
                 <DetailItem label="เลขเครื่องที่เสร็จ">{selectedReport.receipt_no || "-"}</DetailItem>
                 <DetailItem label="เหตุผลการปฏิเสธ">{selectedReport.reject_reason || "-"}</DetailItem>
-                <DetailItem label="Job ID">{selectedReport.job_id}</DetailItem>
+                <DetailItem label="ผู้รับงาน">{selectedReport.handler_tag || "-"}</DetailItem>
               </div>
 
-              <div className="mt-6 space-y-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">หมายเลขเครื่อง (เพื่อทำเครื่องหมายว่าเสร็จสิ้น)</label>
+              <div className="mt-3 space-y-2">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium">หมายเลขเครื่อง (เพื่อทำเครื่องหมายว่าเสร็จสิ้น)</label>
                   <input
                     value={completedReceiptNo}
                     onChange={(e) => setCompletedReceiptNo(e.target.value)}
                     placeholder="กรอกหมายเลขเครื่องที่เสร็จ (ไม่บังคับ)"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-md"
+                    className="w-full px-2 py-1.5 border border-slate-200 rounded text-sm"
                   />
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">เหตุผลการปฏิเสธ (เพื่อทำเครื่องหมายว่าปฏิเสธ)</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium">เหตุผลการปฏิเสธ (เพื่อทำเครื่องหมายว่าปฏิเสธ)</label>
                   <input
                     value={rejectedReason}
                     onChange={(e) => setRejectedReason(e.target.value)}
                     placeholder="ป้อนเหตุผลการปฏิเสธ"
-                    className="w-full px-3 py-2 border border-slate-200 rounded-md"
+                    className="w-full px-2 py-1.5 border border-slate-200 rounded text-sm"
                   />
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium">ชื่อผู้รับงาน</label>
+                  <input
+                    value={handlerName}
+                    onChange={(e) => setHandlerName(e.target.value)}
+                    placeholder="กรอกชื่อผู้รับงาน"
+                    className="w-full px-2 py-1.5 border border-slate-200 rounded text-sm"
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-1.5 pt-1">
                   <button
                     type="button"
-                    disabled={updateLoading || selectedReport.status === "in-progress"}
-                    onClick={() => updateReportStatus("in-progress")}
-                    className="w-full sm:w-auto px-4 py-2 bg-slate-900 text-white rounded-md disabled:opacity-50 hover:bg-slate-800"
+                    disabled={updateLoading || selectedReport.status === "in-progress" || !handlerName.trim()}
+                    onClick={() => updateReportStatus("in-progress", { handlerName })}
+                    className="flex-1 px-2 py-1.5 bg-slate-900 text-white text-xs font-medium rounded disabled:opacity-50 hover:bg-slate-800"
                   >
                     รับงาน
                   </button>
 
                   <button
                     type="button"
-                    disabled={updateLoading || selectedReport.status === "completed"}
+                    disabled={updateLoading || selectedReport.status === "completed" || selectedReport.status !== "in-progress"}
                     onClick={() => updateReportStatus("completed", { receiptNo: completedReceiptNo })}
-                    className="w-full sm:w-auto px-4 py-2 bg-emerald-600 text-white rounded-md disabled:opacity-50 hover:bg-emerald-700"
+                    className="flex-1 px-2 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded disabled:opacity-50 hover:bg-emerald-700"
                   >
                     เสร็จสิ้น
                   </button>
@@ -659,7 +679,7 @@ export default function AdminPage() {
                     type="button"
                     disabled={updateLoading || selectedReport.status === "rejected"}
                     onClick={() => updateReportStatus("rejected", { reason: rejectedReason })}
-                    className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-md disabled:opacity-50 hover:bg-red-700"
+                    className="flex-1 px-2 py-1.5 bg-red-600 text-white text-xs font-medium rounded disabled:opacity-50 hover:bg-red-700"
                   >
                     ปฏิเสธ
                   </button>
@@ -668,13 +688,13 @@ export default function AdminPage() {
                     type="button"
                     disabled={updateLoading}
                     onClick={deleteReport}
-                    className="w-full sm:ml-auto sm:w-auto px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-md hover:bg-slate-50"
+                    className="flex-1 px-2 py-1.5 bg-slate-100 text-slate-700 text-xs font-medium rounded hover:bg-slate-200"
                   >
                     ลบ
                   </button>
                 </div>
 
-                <div className="text-sm text-slate-500">สถานะ: <span className="font-medium">{getStatusConfig(selectedReport.status).label}</span></div>
+                <div className="text-xs text-slate-500 pt-1">สถานะ: <span className="font-medium">{getStatusConfig(selectedReport.status).label}</span></div>
               </div>
             </div>
           </div>

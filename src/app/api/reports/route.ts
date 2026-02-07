@@ -120,6 +120,7 @@ type UpdatePayload = {
   status?: string;
   receiptNo?: string | null;
   reason?: string | null;
+  handlerName?: string;
   name?: string;
   phone?: string;
   device?: string;
@@ -130,17 +131,37 @@ type UpdatePayload = {
 
 export async function GET() {
   console.log("[REPORTS] GET request received");
+  console.log("[REPORTS] SUPABASE_URL:", SUPABASE_URL ? "✓" : "✗");
+  console.log("[REPORTS] SUPABASE_SERVICE_ROLE_KEY:", SUPABASE_SERVICE_ROLE_KEY ? "✓" : "✗");
+
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ 
+      error: "Missing SUPABASE credentials in environment" 
+    }, { status: 500 });
+  }
 
   try {
+    console.log("[REPORTS] Attempting to fetch from repair_requests table...");
+    
     const { data, error } = await supabaseAdmin
       .from("repair_requests")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("[REPORTS] GET error:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("[REPORTS] Supabase query error:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      return NextResponse.json({ 
+        error: `Database error: ${error.message}`,
+        code: error.code
+      }, { status: 500 });
     }
+
+    console.log("[REPORTS] Successfully fetched", (data || []).length, "records");
 
     const mapped = (data || []).map((item: RepairRow) => ({
       id: item.id || "",
@@ -163,10 +184,21 @@ export async function GET() {
       updated_at: item.updated_at || item.created_at || new Date().toISOString(),
     }));
 
-    return NextResponse.json(mapped);
+    return NextResponse.json(mapped, {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store, max-age=0"
+      }
+    });
   } catch (err) {
-    console.error("[REPORTS] GET catch:", err);
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    console.error("[REPORTS] GET catch error:", {
+      message: String(err),
+      error: err instanceof Error ? err.message : "Unknown error",
+      stack: err instanceof Error ? err.stack : undefined
+    });
+    return NextResponse.json({ 
+      error: `Server error: ${String(err)}` 
+    }, { status: 500 });
   }
 }
 
@@ -196,6 +228,7 @@ export async function POST(req: NextRequest) {
     };
     if (receiptNo) updateObj["receipt_no"] = receiptNo;
     if (reason) updateObj["reject_reason"] = reason;
+    if (body.handlerName) updateObj["handler_tag"] = body.handlerName;
     if (body.name) updateObj["full_name"] = body.name;
     if (body.phone) updateObj["phone"] = body.phone;
     if (body.device) updateObj["device"] = body.device;
@@ -254,155 +287,6 @@ export async function POST(req: NextRequest) {
       finalUpdated = (first.data as RepairRow[]) || [];
     }
 
-    if (newStatus === "completed") {
-      const LINE_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-      const LINE_TO = process.env.LINE_CHANNEL_ID;
-      const { data: taskData } = await supabaseAdmin
-              .from("repair_requests")
-        .select("*")
-        .eq("job_id", body.jobId)
-        .maybeSingle();
-
-      if (LINE_TOKEN && LINE_TO && taskData) {
-         const createCompletionFlex = (task: RepairRow) => {
-          const createInfoBox = (icon: string, label: string, value: string) => ({
-            type: "box" as const,
-            layout: "horizontal" as const,
-            spacing: "sm" as const,
-            contents: [
-              {
-                type: "box" as const,
-                layout: "horizontal" as const,
-                contents: [
-                  { type: "text" as const, text: icon, color: "#94a3b8", size: "sm" as const, flex: 0, align: "center" as const },
-                  { type: "text" as const, text: label, color: "#475569", size: "xs" as const, weight: "bold" as const, flex: 1, margin: "sm" as const, align: "start" as const }
-                ],
-                flex: 2
-              },
-              {
-                type: "text" as const,
-                text: value,
-                color: "#1e293b",
-                size: "sm" as const,
-                wrap: true,
-                flex: 3,
-                align: "end" as const
-              }
-            ]
-          });
-
-          return {
-            type: "bubble" as const,
-            body: {
-              type: "box" as const,
-              layout: "vertical" as const,
-              paddingAll: "0px",
-              contents: [
-                {
-                  type: "box" as const,
-                  layout: "horizontal" as const,
-                  backgroundColor: "#10b981",
-                  paddingAll: "14px",
-                  contents: [
-                    { type: "text" as const, text: "✅", color: "#ffffff", size: "md" as const, flex: 0 },
-                    { type: "text" as const, text: "งานเสร็จแล้ว\n🏥 โรงพยาบาลนพรัตน์ราชธานี", weight: "bold" as const, color: "#ffffff", size: "sm" as const, wrap: true, margin: "md" as const }
-                  ]
-                },
-                {
-                  type: "box" as const,
-                  layout: "vertical" as const,
-                  paddingAll: "14px",
-                  spacing: "sm" as const,
-                  contents: [
-                    { type: "text" as const, text: "🆔 Job ID", weight: "bold" as const, color: "#10b981", size: "sm" as const },
-                    { type: "text" as const, text: task.job_id || "-", color: "#333333", size: "md" as const, wrap: true }
-                  ]
-                },
-                { type: "separator" as const, margin: "none" as const, color: "#f3f4f6" },
-                {
-                  type: "box" as const,
-                  layout: "vertical" as const,
-                  paddingAll: "14px",
-                  spacing: "lg" as const,
-                  contents: [
-                    createInfoBox("👤", "ผู้แจ้ง", task.full_name || "-"),
-                    { type: "separator" as const, margin: "md" as const, color: "#f3f4f6" },
-                    createInfoBox("🏢", "แผนก", task.dept_name || "-"),
-                    { type: "separator" as const, margin: "md" as const, color: "#f3f4f6" },
-                    createInfoBox("📍", "สถานที่", `${task.dept_building || "-"} ชั้น ${task.dept_floor || "-"}`),
-                    { type: "separator" as const, margin: "md" as const, color: "#f3f4f6" },
-                    createInfoBox("💻", "อุปกรณ์", task.device || "-"),
-                    { type: "separator" as const, margin: "md" as const, color: "#f3f4f6" },
-                    createInfoBox("🔢", "หมายเลขเครื่อง", task.device_id || "-"),
-                    { type: "separator" as const, margin: "md" as const, color: "#f3f4f6" },
-                    createInfoBox("📞", "เบอร์ติดต่อ", task.phone || "-"),
-                  ]
-                },
-                {
-                  type: "box" as const,
-                  layout: "vertical" as const,
-                  backgroundColor: "#d1fae5",
-                  paddingAll: "14px",
-                  contents: [
-                    { type: "text" as const, text: "✅ เสร็จแล้ว", weight: "bold" as const, color: "#065f46", size: "sm" as const },
-                    { type: "text" as const, text: new Date().toLocaleString("th-TH"), color: "#047857", size: "sm" as const, margin: "md" as const }
-                  ]
-                },
-                ...(receiptNo ? [{
-                  type: "box" as const,
-                  layout: "vertical" as const,
-                  backgroundColor: "#fef3c7",
-                  paddingAll: "14px",
-                  margin: "md",
-                  contents: [
-                    { type: "text" as const, text: "📋 เลขเครื่องที่เสร็จ", weight: "bold" as const, color: "#b45309", size: "sm" as const },
-                    { type: "text" as const, text: receiptNo, color: "#78350f", size: "md" as const, margin: "md" as const, weight: "bold" as const }
-                  ]
-                }] : []),
-                ...(task.issue ? [{
-                  type: "box" as const,
-                  layout: "vertical" as const,
-                  backgroundColor: "#fef3c7",
-                  paddingAll: "14px",
-                  margin: "md",
-                  contents: [
-                    { type: "text" as const, text: "❗ ปัญหา/อาการ", weight: "bold" as const, color: "#b45309", size: "sm" as const },
-                    { type: "text" as const, text: task.issue.length > 200 ? task.issue.slice(0, 197) + "..." : task.issue, color: "#78350f", size: "sm" as const, wrap: true, margin: "md" as const }
-                  ]
-                }] : [])
-              ]
-            }
-          };
-        };
-
-        try {
-          const flexBubble = createCompletionFlex(taskData);
-          const payload = {
-            to: LINE_TO,
-            messages: [
-              { type: "flex" as const, altText: `งาน ${body.jobId} เสร็จแล้ว`, contents: flexBubble }
-            ]
-          };
-
-          const pushRes = await fetch("https://api.line.me/v2/bot/message/push", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${LINE_TOKEN}` },
-            body: JSON.stringify(payload),
-          });
-
-          if (pushRes.ok) {
-            console.log("[LINE] Completion notification sent for job:", body.jobId);
-          } else {
-            console.error("[LINE] Completion push failed:", pushRes.status);
-          }
-        } catch (err) {
-          console.error("[LINE] Completion notification error:", err);
-        }
-      } else {
-        console.log("[LINE] env vars missing or task data not found for job:", body.jobId);
-      }
-    }
-
     if (newStatus === "rejected" && reason) {
       console.log("[NOTIFY] Rejected job", body.jobId, "Reason:", reason);
     }
@@ -424,7 +308,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   console.log("[REPORTS] DELETE request received");
 
-  const isAuthed = await verifyAuth(req);
+  const isAuthed = await verifyAuth(req); // ✓ req is used here
   if (!isAuthed) {
     console.log("[REPORTS] DELETE Unauthorized");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
