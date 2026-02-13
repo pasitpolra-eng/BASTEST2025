@@ -79,6 +79,7 @@ export default function AdminPage() {
   const [rejectedReason, setRejectedReason] = useState("");
   const [handlerName, setHandlerName] = useState("");
   const [completionSuccess, setCompletionSuccess] = useState<Report | null>(null);
+  const [searchQuery] = useState("");
 
   const intervalRef = useRef<number | null>(null);
 
@@ -266,11 +267,6 @@ export default function AdminPage() {
           setSelectedReport(mapped);
           setReports((prev) => prev.map((r) => (r.job_id === mapped.job_id || r.id === mapped.id ? mapped : r)));
 
-          if (mapped.status === "completed") {
-            setCompletionSuccess(mapped);
-            setTimeout(() => setCompletionSuccess(null), 5000);
-          }
-
           setCompletedReceiptNo(mapped.receipt_no ?? "");
           setRejectedReason(mapped.reject_reason ?? "");
         } else {
@@ -349,7 +345,21 @@ export default function AdminPage() {
     { id: "rejected", label: "ถูกปฏิเสธ" },
   ];
 
-  const filteredReports = reports.filter((r) => (activeTab === "all" ? true : r.status === activeTab));
+  const filteredReports = reports
+    .filter((r) => (activeTab === "all" ? true : r.status === activeTab))
+    .filter((r) => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        r.job_id?.toLowerCase().includes(q) ||
+        r.name?.toLowerCase().includes(q) ||
+        r.phone?.toLowerCase().includes(q) ||
+        r.device?.toLowerCase().includes(q) ||
+        r.device_id?.toLowerCase().includes(q) ||
+        r.issue?.toLowerCase().includes(q) ||
+        r.dept_name?.toLowerCase().includes(q)
+      );
+    });
 
   return (
     <div className="min-h-screen bg-gray-50 text-slate-900 font-sans antialiased text-base md:text-lg">
@@ -395,11 +405,11 @@ export default function AdminPage() {
         {completionSuccess && (
           <div className="mb-6 p-4 sm:p-6 bg-emerald-50 border border-emerald-200 rounded-lg shadow-md">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
+              <div className="flex-1">
                 <h3 className="text-lg font-bold text-emerald-900 mb-3">
                   ✅ งาน {completionSuccess.name} เสร็จเรียบร้อย
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-emerald-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-emerald-800 mb-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">ผู้แจ้ง</p>
                     <p className="font-medium">{completionSuccess.name}</p>
@@ -424,6 +434,11 @@ export default function AdminPage() {
                       <p className="font-medium">{completionSuccess.handler_tag}</p>
                     </div>
                   )}
+                </div>
+                {/* LINE Notification Badge */}
+                <div className="inline-flex items-center gap-2 px-3 py-2 bg-emerald-100 rounded-md">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-xs text-emerald-700 font-semibold">📱 ส่ง LINE notification แล้ว</span>
                 </div>
               </div>
               <button
@@ -518,13 +533,12 @@ export default function AdminPage() {
             <table className="w-full table-fixed text-base md:text-lg">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-[10%]">เลขที่งาน</th>
-                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-[16%]">ชื่อ / แผนก</th>
-                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-[10%]">อาคาร / ชั้น</th>
-                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-[12%]">เบอร์โทร</th>
-                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-[22%]">ปัญหา</th>
-                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-[12%]">สถานะ</th>
-                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-[18%]">วันที่เดือนปี</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/6">ชื่อ / แผนก</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/6">อาคาร / ชั้น</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/6">เบอร์โทร</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/6">ปัญหา</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/6">สถานะ</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/6">วันที่เดือนปี</th>
                 </tr>
               </thead>
               <tbody>
@@ -532,7 +546,6 @@ export default function AdminPage() {
                   const cfg = getStatusConfig(r.status);
                   return (
                     <tr key={r.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => setSelectedReport(r)}>
-                      <td className="px-3 py-3 align-top font-mono text-sm text-slate-700">{r.name}</td>
                       <td className="px-3 py-3 align-top">
                         <div className="font-medium text-slate-900">{r.name}</div>
                         <div className="text-xs text-slate-500">{r.dept_name}</div>
@@ -552,7 +565,7 @@ export default function AdminPage() {
                 })}
                 {filteredReports.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
+                    <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
                       ไม่พบผู้แจ้งปัญหา
                     </td>
                   </tr>
@@ -677,7 +690,7 @@ export default function AdminPage() {
 
                   <button
                     type="button"
-                    disabled={updateLoading || selectedReport.status === "rejected"}
+                    disabled={updateLoading || selectedReport.status === "rejected" || !rejectedReason.trim()}
                     onClick={() => updateReportStatus("rejected", { reason: rejectedReason })}
                     className="flex-1 px-2 py-1.5 bg-red-600 text-white text-xs font-medium rounded disabled:opacity-50 hover:bg-red-700"
                   >

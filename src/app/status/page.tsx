@@ -402,6 +402,7 @@ function StatusPageContent() {
               }}
               placeholder="ร.พ.น. ชื่อผู้แจ้ง หรือ Job ID..."
               className="w-full rounded-lg py-2 md:py-3 px-3 md:px-4 bg-white border border-gray-200 placeholder:text-gray-400 text-sm md:text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-300 transition shadow-sm"
+              suppressHydrationWarning
             />
 
             <button
@@ -416,6 +417,7 @@ function StatusPageContent() {
                 setResults(filterResults(allDataRef.current, q));
               }}
               className="absolute right-1 top-1/2 -translate-y-1/2 px-3 md:px-4 py-1 md:py-2 rounded-md bg-indigo-600 text-white font-semibold text-sm shadow hover:bg-indigo-700 transition"
+              suppressHydrationWarning
             >
               ค้นหา
             </button>

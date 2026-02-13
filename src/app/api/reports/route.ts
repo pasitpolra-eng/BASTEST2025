@@ -36,6 +36,264 @@ function base64DecodeToString(b64: string) {
   }
 }
 
+// Type definitions
+type RepairRow = {
+  id?: string;
+  job_id?: string;
+  full_name?: string;
+  name?: string;
+  phone?: string;
+  device?: string;
+  device_id?: string;
+  issue?: string;
+  status?: string;
+  dept_name?: string;
+  dept_building?: string;    
+  dept_floor?: string;         
+  handler_id?: string;
+  handler_tag?: string;
+  notes?: string;
+  receipt_no?: string | null;
+  reject_reason?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+type UpdatePayload = {
+  jobId: string;
+  status?: string;
+  receiptNo?: string | null;
+  reason?: string | null;
+  handlerName?: string;
+  name?: string;
+  phone?: string;
+  device?: string;
+  notes?: string;
+};
+
+async function sendLineNotification(jobData: RepairRow) {
+  const lineAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+  const lineUserId = process.env.LINE_USER_ID;
+
+  console.log("[LINE] Attempting to send notification...");
+  console.log("[LINE] Token available:", !!lineAccessToken);
+  console.log("[LINE] User ID available:", !!lineUserId);
+  console.log("[LINE] Job data:", { job_id: jobData.job_id, name: jobData.full_name || jobData.name });
+
+  if (!lineAccessToken || !lineUserId) {
+    console.warn("[LINE] Missing LINE credentials, skipping notification");
+    return false;
+  }
+
+  try {
+    const flexMessage = {
+      type: "flex",
+      altText: `✅ งานเสร็จสิ้น - ${jobData.full_name || jobData.name}`,
+      contents: {
+        type: "bubble",
+        header: {
+          type: "box",
+          layout: "vertical",
+          backgroundColor: "#00D084",
+          paddingAll: "md",
+          spacing: "xs",
+          contents: [
+            {
+              type: "text",
+              text: "✅ งานเสร็จสิ้น",
+              size: "lg",
+              weight: "bold",
+              color: "#FFFFFF",
+            },
+            {
+              type: "text",
+              text: jobData.dept_name || "-",
+              size: "sm",
+              color: "#FFFFFF",
+            },
+          ],
+        },
+        body: {
+          type: "box",
+          layout: "vertical",
+          spacing: "lg",
+          paddingAll: "md",
+          contents: [
+            {
+              type: "box",
+              layout: "vertical",
+              spacing: "md",
+              contents: [
+                {
+                  type: "text",
+                  text: "👤 ผู้แจ้ง",
+                  size: "xs",
+                  color: "#666666",
+                  weight: "bold",
+                },
+                {
+                  type: "text",
+                  text: jobData.full_name || jobData.name || "-",
+                  size: "sm",
+                  weight: "bold",
+                },
+              ],
+            },
+            {
+              type: "box",
+              layout: "horizontal",
+              spacing: "lg",
+              contents: [
+                {
+                  type: "box",
+                  layout: "vertical",
+                  flex: 1,
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "🏥 แผนก",
+                      size: "xs",
+                      color: "#666666",
+                      weight: "bold",
+                    },
+                    {
+                      type: "text",
+                      text: jobData.dept_name || "-",
+                      size: "sm",
+                      wrap: true,
+                    },
+                  ],
+                },
+                {
+                  type: "box",
+                  layout: "vertical",
+                  flex: 1,
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "📍 สถานที่",
+                      size: "xs",
+                      color: "#666666",
+                      weight: "bold",
+                    },
+                    {
+                      type: "text",
+                      text: `${jobData.dept_building || "-"} ชั้น ${jobData.dept_floor || "-"}`,
+                      size: "sm",
+                      wrap: true,
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: "box",
+              layout: "horizontal",
+              spacing: "lg",
+              contents: [
+                {
+                  type: "box",
+                  layout: "vertical",
+                  flex: 1,
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "💻 อุปกรณ์",
+                      size: "xs",
+                      color: "#666666",
+                      weight: "bold",
+                    },
+                    {
+                      type: "text",
+                      text: jobData.device || "-",
+                      size: "sm",
+                      wrap: true,
+                    },
+                  ],
+                },
+                {
+                  type: "box",
+                  layout: "vertical",
+                  flex: 1,
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "📞 เบอร์",
+                      size: "xs",
+                      color: "#666666",
+                      weight: "bold",
+                    },
+                    {
+                      type: "text",
+                      text: jobData.phone || "-",
+                      size: "sm",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        footer: {
+          type: "box",
+          layout: "vertical",
+          spacing: "sm",
+          backgroundColor: "#FFFACD",
+          paddingAll: "md",
+          contents: [
+            {
+              type: "text",
+              text: "⚠️ ปัญหา",
+              size: "xs",
+              color: "#666666",
+              weight: "bold",
+            },
+            {
+              type: "text",
+              text: jobData.issue || "-",
+              size: "sm",
+              wrap: true,
+              color: "#333333",
+            },
+          ],
+        },
+      },
+    };
+
+    console.log("[LINE] Sending request to LINE API...");
+    const response = await fetch("https://api.line.me/v2/bot/message/push", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${lineAccessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        to: lineUserId,
+        messages: [flexMessage],
+      }),
+    });
+
+    const responseText = await response.text();
+    console.log("[LINE] Response status:", response.status);
+    console.log("[LINE] Response body:", responseText);
+
+    if (response.ok) {
+      console.log("[LINE] ✅ Notification sent successfully for job:", jobData.job_id);
+      return true;
+    } else {
+      console.error("[LINE] ❌ Failed to send notification:", response.status, responseText);
+      return false;
+    }
+  } catch (err) {
+    console.error("[LINE] ❌ Error sending notification:", err);
+    return false;
+  }
+}
+
 async function verifyAuth(req: NextRequest) {
   const cookieHeader = req.headers.get("cookie");
   const token = getCookieValue(cookieHeader, "admin_auth");
@@ -92,42 +350,6 @@ async function verifyAuth(req: NextRequest) {
     return false;
   }
 }
-
-type RepairRow = {
-  id?: string;
-  job_id?: string;
-  full_name?: string;
-  name?: string;
-  phone?: string;
-  device?: string;
-  device_id?: string;
-  issue?: string;
-  status?: string;
-  dept_name?: string;
-  dept_building?: string;    
-  dept_floor?: string;         
-  handler_id?: string;
-  handler_tag?: string;
-  notes?: string;
-  receipt_no?: string | null;
-  reject_reason?: string | null;
-  created_at?: string;
-  updated_at?: string;
-};
-
-type UpdatePayload = {
-  jobId: string;
-  status?: string;
-  receiptNo?: string | null;
-  reason?: string | null;
-  handlerName?: string;
-  name?: string;
-  phone?: string;
-  device?: string;
-  notes?: string;
-};
-
-
 
 export async function GET() {
   console.log("[REPORTS] GET request received");
@@ -291,13 +513,25 @@ export async function POST(req: NextRequest) {
       console.log("[NOTIFY] Rejected job", body.jobId, "Reason:", reason);
     }
 
+    // Send LINE notification when job is completed
+    let lineNotificationSent = false;
+    console.log("[REPORTS] Checking notification condition - newStatus:", newStatus, "finalUpdated.length:", finalUpdated.length);
+    if (newStatus === "completed" && finalUpdated.length > 0) {
+      console.log("[REPORTS] ✅ Condition met, sending LINE notification...");
+      const jobData = finalUpdated[0];
+      lineNotificationSent = await sendLineNotification(jobData);
+      console.log("[REPORTS] LINE notification result:", lineNotificationSent);
+    } else {
+      console.log("[REPORTS] ❌ Notification not sent - condition not met or no updated data");
+    }
+
     return NextResponse.json({ 
       ok: true, 
       updated: finalUpdated || [],
       status: newStatus,
       jobId: body.jobId,
       completedAt: now,
-      notificationSent: newStatus === "completed"
+      notificationSent: lineNotificationSent
     });
   } catch (err) {
     console.error("[REPORTS] POST catch:", err);
