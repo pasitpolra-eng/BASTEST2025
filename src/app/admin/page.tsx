@@ -79,7 +79,7 @@ export default function AdminPage() {
   const [rejectedReason, setRejectedReason] = useState("");
   const [handlerName, setHandlerName] = useState("");
   const [completionSuccess, setCompletionSuccess] = useState<Report | null>(null);
-  const [searchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const intervalRef = useRef<number | null>(null);
 
@@ -509,22 +509,34 @@ export default function AdminPage() {
         </section>
 
         <section className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
-          <div className="flex items-center space-x-3">
-            <label className="text-base text-slate-600">ตัวกรอง:</label>
-            <div className="flex items-center space-x-2">
-              {tabs.map((t) => (
-                <button
-                  key={String(t.id)}
-                  type="button"
-                  onClick={() => setActiveTab(t.id)}
-                  className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-md ${activeTab === t.id ? "bg-slate-900 text-white" : "bg-white border border-slate-200 text-slate-700"}`}
-                >
-                  {t.label}
-                </button>
-              ))}
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-1">
+            <div className="flex items-center space-x-3">
+              <label className="text-base text-slate-600 whitespace-nowrap">ตัวกรอง:</label>
+              <div className="flex items-center space-x-2">
+                {tabs.map((t) => (
+                  <button
+                    key={String(t.id)}
+                    type="button"
+                    onClick={() => setActiveTab(t.id)}
+                    className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-md ${activeTab === t.id ? "bg-slate-900 text-white" : "bg-white border border-slate-200 text-slate-700"}`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex-1 w-full md:w-auto">
+              <input
+                type="text"
+                placeholder="ค้นหา: ชื่อ, เบอร์โทร, แผนก, ปัญหา..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+              />
             </div>
           </div>
-          <div className="text-sm sm:text-base text-slate-500">Auto refresh system</div>
+          <div className="text-sm sm:text-base text-slate-500 whitespace-nowrap">Auto refresh system</div>
         </section>
 
         <section className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">

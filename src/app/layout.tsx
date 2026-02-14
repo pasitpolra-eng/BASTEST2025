@@ -61,15 +61,6 @@ export default function RootLayout({
               </Link>
             </nav>
 
-            {/* Contact button */}
-            <a
-              href="tel:7671"
-              className="ml-2 sm:ml-3 px-2 sm:px-3 py-1.5 rounded bg-green-600 text-white text-xs sm:text-sm hover:bg-green-700 flex items-center gap-1 flex-shrink-0"
-              aria-label="โทรหา IT Support 7671"
-            >
-              📞 <span className="hidden sm:inline">7671</span>
-            </a>
-
             {/* Mobile menu button */}
             <div className="lg:hidden ml-2">
               <details className="relative">
