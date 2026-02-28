@@ -43,6 +43,8 @@ type RepairRow = {
   full_name?: string;
   name?: string;
   phone?: string;
+  // IP address recorded when the request was submitted
+  request_ip?: string;
   device?: string;
   device_id?: string;
   issue?: string;
@@ -390,6 +392,7 @@ export async function GET() {
       job_id: item.job_id || "",
       name: item.full_name || item.name || "-",
       phone: item.phone || "-",
+      request_ip: (item.request_ip || "").replace(/^::ffff:/i, "") || "-",
       device: item.device || "-",
       device_id: item.device_id || "-", 
       issue: item.issue || "-",

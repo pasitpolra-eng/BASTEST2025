@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/utils/supabase";
@@ -81,45 +81,7 @@ const normalize = (s: string) =>
     .replace(/\s+/g, "")
     .replace(/ร\.พ\.น\.|ร.พ.น\.|rpnn|rpn/g, "");
 
-const filterResults = (items: RepairStatus[], query: string): RepairStatus[] => {
-  const searchTerm = query.trim();
-  
-  if (!searchTerm) {
-    return items;
-  }
 
-  const q = searchTerm.toLowerCase();
-  const qNorm = normalize(searchTerm);
-  const digitsOnlyQuery = searchTerm.replace(/\D/g, "");
-
-  return items.filter((item) => {
-    const deviceNorm = normalize(item.deviceId ?? "");
-    if (deviceNorm.includes(qNorm) && qNorm !== "") return true;
-    if (fuzzyMatch(item.deviceId ?? "", qNorm)) return true;
-
-    if ((item.jobId ?? "").toLowerCase().includes(q)) return true;
-    if (fuzzyMatch(item.jobId ?? "", q)) return true;
-
-    if ((item.deviceId ?? "").toLowerCase().includes(q)) return true;
-    if (fuzzyMatch(item.deviceId ?? "", q)) return true;
-
-    if ((item.fullName ?? "").toLowerCase().includes(q)) return true;
-    if (fuzzyMatch(item.fullName ?? "", q)) return true;
-
-    if ((item.deptName ?? "").toLowerCase().includes(q)) return true;
-    if (fuzzyMatch(item.deptName ?? "", q)) return true;
-
-    if ((item.device ?? "").toLowerCase().includes(q)) return true;
-    if (fuzzyMatch(item.device ?? "", q)) return true;
-
-    if ((item.issue ?? "").toLowerCase().includes(q)) return true;
-    if ((item.notes ?? "").toLowerCase().includes(q)) return true;
-
-    if (digitsOnlyQuery && (item.deviceId ?? "").replace(/\D/g, "").includes(digitsOnlyQuery)) return true;
-
-    return false;
-  });
-};
 
 export default function Page(): React.ReactElement {
   return <StatusPageContent />;
@@ -130,16 +92,57 @@ function StatusPageContent() {
   const [results, setResults] = useState<RepairStatus[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedDetail, setSelectedDetail] = useState<RepairStatus | null>(null);
-  const allDataRef = useRef<RepairStatus[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [lastSync, setLastSync] = useState<Date | null>(null);
+
+
+  const filteredResults = React.useMemo(() => {
+    let base = results;
+    const qtrim = searchQuery.trim();
+    if (qtrim) {
+      const q = qtrim.toLowerCase();
+      const qNorm = normalize(qtrim);
+      const digitsOnlyQuery = qtrim.replace(/\D/g, "");
+
+      base = results.filter((item) => {
+        const deviceNorm = normalize(item.deviceId ?? "");
+        if (deviceNorm.includes(qNorm) && qNorm !== "") return true;
+        if (fuzzyMatch(item.deviceId ?? "", qNorm)) return true;
+
+        if ((item.jobId ?? "").toLowerCase().includes(q)) return true;
+        if (fuzzyMatch(item.jobId ?? "", q)) return true;
+
+        if ((item.deviceId ?? "").toLowerCase().includes(q)) return true;
+        if (fuzzyMatch(item.deviceId ?? "", q)) return true;
+
+        if ((item.fullName ?? "").toLowerCase().includes(q)) return true;
+        if (fuzzyMatch(item.fullName ?? "", q)) return true;
+
+        if ((item.deptName ?? "").toLowerCase().includes(q)) return true;
+        if (fuzzyMatch(item.deptName ?? "", q)) return true;
+
+        if ((item.device ?? "").toLowerCase().includes(q)) return true;
+        if (fuzzyMatch(item.device ?? "", q)) return true;
+
+        if ((item.issue ?? "").toLowerCase().includes(q)) return true;
+        if ((item.notes ?? "").toLowerCase().includes(q)) return true;
+
+        if (digitsOnlyQuery && (item.deviceId ?? "").replace(/\D/g, "").includes(digitsOnlyQuery)) return true;
+
+        return false;
+      });
+    }
+    return base;
+  }, [results, searchQuery]);
 
   useEffect(() => {
     (async () => {
+      setLoading(true);
       try {
         const { data, error } = await supabase
           .from("repair_requests")
           .select("*")
-          .order("created_at", { ascending: false })
-          .limit(100);
+          .order("created_at", { ascending: false });
 
         if (error) throw error;
 
@@ -166,77 +169,80 @@ function StatusPageContent() {
           receipt_no: item.receipt_no,
         }));
 
-        allDataRef.current = transformed;
         setResults(transformed);
+        setLastSync(new Date());
       } catch (err) {
         console.error("Error loading data:", err);
         setError("ไม่สามารถโหลดข้อมูลจาก Supabase ได้ กรุณาตรวจสอบคอนโซล");
+      } finally {
+        setLoading(false);
       }
     })();
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
+  const mountedRef = React.useRef(true);
 
-    async function doFetchReports() {
+  const fetchReports = React.useCallback(async () => {
+    try {
       try {
-        try {
-          console.log("🔄 Syncing webhook events...");
-          await fetch("/api/sync-webhook-events");
-        } catch (err) {
-          console.error("⚠️ Failed to sync webhook events:", err);
-        }
-
-        const res = await fetch("/api/reports");
-        if (!res.ok) {
-          const err = await res.text();
-          console.error("Failed to fetch reports:", err);
-          return;
-        }
-        const data = await res.json();
-
-        const transformed: RepairStatus[] = (data || []).map((item: Partial<DatabaseItem> & Record<string, unknown>) => ({
-          jobId: item.job_id,
-          deviceId: item.device_id,
-          fullName: item.full_name || item.name || item.fullName || "",
-          deptName: item.dept_name,
-          deptBuilding: item.dept_building,
-          deptFloor: item.dept_floor,
-          phone: item.phone,
-          device: item.device,
-          issue: item.issue,
-          status: (item.status || "pending") as RepairStatus["status"],
-          createdAt: item.created_at
-            ? new Date(item.created_at).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
-            : "",
-          updatedAt: item.updated_at
-            ? new Date(item.updated_at).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
-            : "",
-          notes: item.notes,
-          reject_reason: item.reject_reason,
-          handler_tag: item.handler_tag,
-          receipt_no: item.receipt_no,
-        }));
-
-        if (!mounted) return;
-
-        allDataRef.current = transformed;
-        setResults(filterResults(transformed, searchQuery));
+        console.log("🔄 Syncing webhook events...");
+        await fetch("/api/sync-webhook-events");
       } catch (err) {
-        console.error("fetchReports error:", err);
+        console.error("⚠️ Failed to sync webhook events:", err);
       }
+
+      setLoading(true);
+      const res = await fetch("/api/reports");
+      if (!res.ok) {
+        const err = await res.text();
+        console.error("Failed to fetch reports:", err);
+        return;
+      }
+      const data = await res.json();
+
+      const transformed: RepairStatus[] = (data || []).map((item: Partial<DatabaseItem> & Record<string, unknown>) => ({
+        jobId: item.job_id,
+        deviceId: item.device_id,
+        fullName: item.full_name || item.name || item.fullName || "",
+        deptName: item.dept_name,
+        deptBuilding: item.dept_building,
+        deptFloor: item.dept_floor,
+        phone: item.phone,
+        device: item.device,
+        issue: item.issue,
+        status: (item.status || "pending") as RepairStatus["status"],
+        createdAt: item.created_at
+          ? new Date(item.created_at).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+          : "",
+        updatedAt: item.updated_at
+          ? new Date(item.updated_at).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+          : "",
+        notes: item.notes,
+        reject_reason: item.reject_reason,
+        handler_tag: item.handler_tag,
+        receipt_no: item.receipt_no,
+      }));
+
+      if (!mountedRef.current) return;
+      setLastSync(new Date());
+      setResults(transformed);
+    } catch (err) {
+      console.error("fetchReports error:", err);
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    doFetchReports();
-    const id = setInterval(() => {
-      doFetchReports();
-    }, 3000);
-
+  useEffect(() => {
+    mountedRef.current = true;
+    fetchReports();
+    const id = setInterval(fetchReports, 60000); 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
       clearInterval(id);
     };
-  }, [searchQuery]);
+  }, [fetchReports, searchQuery]);
+
 
   if (selectedDetail) {
     const statusConfig = STATUS_CONFIG[selectedDetail.status];
@@ -378,6 +384,10 @@ function StatusPageContent() {
           </Link>
         </div>
 
+        {/* Status tabs + stats */}
+        <section className="mb-6">
+            </section>
+
         {/* Search */}
         <div className="mb-6">
           <div className="relative">
@@ -391,30 +401,31 @@ function StatusPageContent() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   const q = searchQuery.trim();
-                  if (!q) {
-                    setError("กรุณาใส่เลข ร.พ.น. ชื่อผู้แจ้ง หรือ Job ID");
-                    return;
-                  }
-                  setError(null);
+                  setError(q ? null : "กรุณาใส่เลข ร.พ.น. ชื่อผู้แจ้ง หรือ Job ID");
                   setSelectedDetail(null);
-                  setResults(filterResults(allDataRef.current, q));
+                  // results update automatically via memo
                 }
               }}
               placeholder="ร.พ.น. ชื่อผู้แจ้ง หรือ Job ID..."
               className="w-full rounded-lg py-2 md:py-3 px-3 md:px-4 bg-white border border-gray-200 placeholder:text-gray-400 text-sm md:text-base text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-300 transition shadow-sm"
               suppressHydrationWarning
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                aria-label="ล้าง"
+              >
+                ✕
+              </button>
+            )}
 
             <button
               onClick={() => {
                 const q = searchQuery.trim();
-                if (!q) {
-                  setError("กรุณาใส่เลข ร.พ.น. ชื่อผู้แจ้ง หรือ Job ID");
-                  return;
-                }
-                setError(null);
+                setError(q ? null : "กรุณาใส่เลข ร.พ.น. ชื่อผู้แจ้ง หรือ Job ID");
                 setSelectedDetail(null);
-                setResults(filterResults(allDataRef.current, q));
+                // search is reactive via memoized filteredResults
               }}
               className="absolute right-1 top-1/2 -translate-y-1/2 px-3 md:px-4 py-1 md:py-2 rounded-md bg-indigo-600 text-white font-semibold text-sm shadow hover:bg-indigo-700 transition"
               suppressHydrationWarning
@@ -424,15 +435,30 @@ function StatusPageContent() {
           </div>
 
           {error && (
-            <div className="mt-2 text-center text-xs md:text-sm text-rose-500">{error}</div>
+            <div className="mt-2 text-center text-xs md:text-sm text-rose-500">
+              {error} <button onClick={fetchReports} className="underline ml-2">ลองใหม่</button>
+            </div>
           )}
+
+          <div className="mt-2 text-xs text-gray-500 flex justify-between items-center">
+            <span className="flex items-center space-x-2">
+              <span>{loading ? "กำลังโหลด..." : lastSync ? `อัปเดต: ${lastSync.toLocaleTimeString("th-TH")}` : ""}</span>
+              <button
+                onClick={fetchReports}
+                className="text-gray-400 hover:text-gray-600"
+                aria-label="รีเฟรช"
+              >🔄</button>
+            </span>
+          </div>
         </div>
 
         {/* Results */}
         <div>
-          {results.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-8">กำลังโหลด...</div>
+          ) : filteredResults.length > 0 ? (
             <div className="space-y-3">
-              {results.map((result) => {
+              {filteredResults.map((result) => {
                 const statusCfg = STATUS_CONFIG[result.status];
                 return (
                   <div
@@ -488,8 +514,14 @@ function StatusPageContent() {
           ) : (
             <div className="text-center py-8 md:py-12">
               <div className="text-4xl md:text-6xl mb-3 md:mb-4">📋</div>
-              <div className="text-lg md:text-xl font-semibold text-gray-800 mb-2">ไม่พบข้อมูล</div>
-              <div className="text-sm md:text-base text-gray-600 mb-4">ยังไม่มีงานแจ้งซ่อม หรือค้นหาไม่พบ</div>
+              <div className="text-lg md:text-xl font-semibold text-gray-800 mb-2">
+                {results.length === 0 ? "ไม่พบข้อมูล" : "ไม่พบผลลัพธ์ที่ตรงกับการค้นหา"}
+              </div>
+              <div className="text-sm md:text-base text-gray-600 mb-4">
+                {results.length === 0
+                  ? "ยังไม่มีงานแจ้งซ่อม"
+                  : "กรุณาลองคำค้นอื่นหรือเคลียร์ช่องค้นหา"}
+              </div>
               <Link
                 href="/repair"
                 className="inline-block px-6 py-2 md:py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-lg font-semibold text-sm md:text-base"

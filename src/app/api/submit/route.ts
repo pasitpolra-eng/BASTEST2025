@@ -11,6 +11,16 @@ const supabaseAdmin = createClient(String(url), String(serviceKey), { auth: { pe
 
 export async function POST(req: NextRequest) {
   try {
+    // pull the remote IP from headers (x-forwarded-for when behind a proxy)
+    const ipHeader = req.headers.get("x-forwarded-for")
+      || req.headers.get("x-real-ip");
+    let requesterIp = ipHeader ? ipHeader.split(",")[0].trim() : "unknown";
+    // strip IPv6-mapped IPv4 prefix if present
+    requesterIp = requesterIp.replace(/^::ffff:/i, "");
+    console.log("[SUBMIT] Requester IP:", requesterIp);
+
+    // (submitter_ip column was removed; use request_ip)
+
     const {
       fullName = "", deptName = "", deptBuilding = "", deptFloor = "",
       device = "", deviceId = "", issue = "", phone = "", notes = "",
@@ -74,7 +84,9 @@ export async function POST(req: NextRequest) {
           device_id: deviceId,
           issue: issue,
           phone: phone,
-          notes: notes, 
+          notes: notes,
+          // record the submitter's IP address for auditing/troubleshooting
+          request_ip: requesterIp,
           status: "pending",
           created_at: now,
           updated_at: now,
@@ -273,6 +285,7 @@ export async function POST(req: NextRequest) {
       dbSaved: !!savedData,
       pushSent,
       notifySent,
+      requesterIp,
     });
   } catch (err) {
     console.error("POST error:", err);

@@ -16,6 +16,8 @@ export interface RepairRequest {
   issue: string;
   phone?: string;
   notes?: string;
+  // IP address of the machine submitting the request (may be unknown)
+  request_ip?: string | null;
   status: RepairStatus;
   receipt_no?: string | null;
   reject_reason?: string | null;

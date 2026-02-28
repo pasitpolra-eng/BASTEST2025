@@ -46,6 +46,50 @@ npm run dev
 
 ---
 
+
+
+## Add request_ip Column
+
+In order to log the originating IP address of repair submissions, a new `request_ip` text column should be added to `repair_requests`.
+
+### Option 1: Auto-run Migration (Easiest)
+
+```bash
+node scripts/migrate-add-customer-line-id.js # this script also handles the new column
+```
+
+(The JS/PowerShell helpers have been updated to add `request_ip` as well.)
+
+### Option 2: Supabase Studio (Manual)
+
+1. **Open Supabase Dashboard**
+   - Go to https://app.supabase.com
+   - Select your project
+   - Click **SQL Editor** tab
+
+2. **Create new query and paste:**
+
+```sql
+-- Add request_ip to repair_requests for auditing
+ALTER TABLE IF EXISTS public.repair_requests
+  ADD COLUMN IF NOT EXISTS request_ip text;
+```
+
+3. **Click "Run" button**
+
+4. **Restart Next.js dev server**
+```bash
+npm run dev
+```
+
+### Option 3: PowerShell Script
+
+```powershell
+.\scripts\migrate-add-customer-line-id.ps1 # also adds request_ip
+```
+
+---
+
 ## Verify Migration
 
 Check that column exists in Supabase:

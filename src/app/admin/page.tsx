@@ -9,6 +9,7 @@ interface Report {
   job_id: string;
   name: string;
   phone?: string;
+  request_ip?: string;
   device?: string;
   device_id?: string;        
   issue: string;
@@ -31,6 +32,7 @@ type ServerRow = {
   full_name?: string;
   name?: string;
   phone?: string;
+  request_ip?: string;
   device?: string;
   device_id?: string;
   issue?: string;
@@ -248,11 +250,7 @@ export default function AdminPage() {
             job_id: row.job_id || selectedReport.job_id,
             name: row.full_name || row.name || selectedReport.name,
             phone: row.phone || selectedReport.phone,
-            device: row.device || selectedReport.device,
-            device_id: row.device_id || selectedReport.device_id,
-            issue: row.issue || selectedReport.issue,
-            status: (row.status as Report["status"]) || updatedReportData.status,
-            dept_name: row.dept_name || selectedReport.dept_name,
+            request_ip: row.request_ip || selectedReport.request_ip,
             dept_building: row.dept_building || selectedReport.dept_building,
             dept_floor: row.dept_floor || selectedReport.dept_floor,
             handler_id: row.handler_id || selectedReport.handler_id,
@@ -262,6 +260,8 @@ export default function AdminPage() {
             reject_reason: row.reject_reason ?? updatedReportData.reject_reason ?? null,
             created_at: row.created_at || selectedReport.created_at,
             updated_at: row.updated_at || new Date().toISOString(),
+            issue: row.issue || selectedReport.issue,           // Add this
+            status: newStatus,                                    // Add this
           };
 
           setSelectedReport(mapped);
@@ -354,6 +354,7 @@ export default function AdminPage() {
         r.job_id?.toLowerCase().includes(q) ||
         r.name?.toLowerCase().includes(q) ||
         r.phone?.toLowerCase().includes(q) ||
+        r.request_ip?.toLowerCase().includes(q) ||
         r.device?.toLowerCase().includes(q) ||
         r.device_id?.toLowerCase().includes(q) ||
         r.issue?.toLowerCase().includes(q) ||
@@ -545,39 +546,46 @@ export default function AdminPage() {
             <table className="w-full table-fixed text-base md:text-lg">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/6">ชื่อ / แผนก</th>
-                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/6">อาคาร / ชั้น</th>
-                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/6">เบอร์โทร</th>
-                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/6">ปัญหา</th>
-                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/6">สถานะ</th>
-                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/6">วันที่เดือนปี</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/8">ชื่อ</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/8">แผนก</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/8">อาคาร / ชั้น</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/8">เบอร์โทร</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/8">IP Address</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/8">ปัญหา</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/8">สถานะ</th>
+                  <th className="px-3 py-4 text-left text-sm text-slate-500 uppercase tracking-wider w-1/8">วันที่เดือนปี</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredReports.map((r) => {
                   const cfg = getStatusConfig(r.status);
                   return (
-                    <tr key={r.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => setSelectedReport(r)}>
-                      <td className="px-3 py-3 align-top">
-                        <div className="font-medium text-slate-900">{r.name}</div>
-                        <div className="text-xs text-slate-500">{r.dept_name}</div>
+                    <tr key={r.id} className="hover:bg-slate-50 even:bg-slate-50 cursor-pointer" onClick={() => setSelectedReport(r)}>
+                      <td className="px-3 py-3 align-top align-middle">
+                        <div className="font-medium text-slate-900 whitespace-nowrap">{r.name}</div>
                       </td>
-                      <td className="px-3 py-3 align-top text-sm text-slate-700">
+                      <td className="px-3 py-3 align-top align-middle text-xs text-slate-900">
+                        {r.dept_name}
+                      </td>
+                      <td className="px-3 py-3 align-top align-middle text-sm text-slate-700">
                         <div>{r.dept_building || "-"}</div>
                         <div className="text-xs text-slate-500">ชั้น {r.dept_floor || "-"}</div>
                       </td>
-                      <td className="px-3 py-3 align-top">{r.phone}</td>
-                      <td className="px-3 py-3 align-top text-sm text-slate-700">{r.issue}</td>
-                      <td className="px-3 py-3 align-top">
+                      <td className="px-3 py-3 align-top align-middle text-slate-900">
+                        <span className="text-slate-900">{r.phone}</span>
+                      </td>
+                      <td className="px-3 py-3 align-top align-middle text-sm text-slate-700 font-mono">{r.request_ip || "-"}</td>
+                      <td className="px-3 py-3 align-top align-middle text-sm text-slate-700">{r.issue}</td>
+                      <td className="px-3 py-3 align-top align-middle">
                         <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${cfg.badgeClass}`}>{cfg.label}</span>
                       </td>
-                      <td className="px-3 py-3 align-top text-sm text-slate-500">{formatDate(r.created_at)}</td>
+                      <td className="px-3 py-3 align-top align-middle text-sm text-slate-500">{formatDate(r.created_at)}</td>
                     </tr>
                   );
                 })}
                 {filteredReports.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
+                    <td colSpan={7} className="px-4 py-6 text-center text-slate-500">
                       ไม่พบผู้แจ้งปัญหา
                     </td>
                   </tr>
@@ -598,10 +606,11 @@ export default function AdminPage() {
                     className="w-full text-left bg-white border border-slate-100 rounded-lg p-3 shadow-sm flex items-start justify-between gap-3"
                   >
                     <div className="min-w-0">
-                      <div className="text-sm font-mono text-slate-700 mb-1 truncate">{r.name}</div>
-                      <div className="font-medium text-slate-900 truncate">{r.name}</div>
-                      <div className="text-xs text-slate-500 truncate">{r.dept_name}</div>
+                      <div className="text-sm font-medium text-slate-900 whitespace-nowrap">{r.name}</div>
+                      <div className="text-xs text-slate-900 truncate">{r.dept_name}</div>
                       <div className="text-xs text-slate-600 mt-1">{r.dept_building || "-"} ชั้น {r.dept_floor || "-"}</div>
+                      <div className="text-xs text-slate-900 mt-1">โทร: {r.phone || "-"}</div>
+                      <div className="text-xs text-slate-500 mt-1">IP Address: <span className="font-mono text-slate-700">{r.request_ip || "-"}</span></div>
                       <div className="text-sm text-slate-700 mt-2 line-clamp-2">{r.issue}</div>
                     </div>
 
@@ -638,6 +647,7 @@ export default function AdminPage() {
 
               <div className="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
                 <DetailItem label="เบอร์โทรศัพท์">{selectedReport.phone}</DetailItem>
+                <DetailItem label="IP Address">{selectedReport.request_ip || "-"}</DetailItem>
                 <DetailItem label="แผนก">{selectedReport.dept_name}</DetailItem>
                 <DetailItem label="อาคาร">{selectedReport.dept_building || "-"}</DetailItem>
                 <DetailItem label="ชั้น">{selectedReport.dept_floor || "-"}</DetailItem>
