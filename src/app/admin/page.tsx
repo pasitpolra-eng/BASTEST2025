@@ -565,7 +565,7 @@ export default function AdminPage() {
                 {filteredReports.map((r) => {
                   const cfg = getStatusConfig(r.status);
                   return (
-                    <tr key={r.id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100 cursor-pointer" onClick={() => setSelectedReport(r)}>
+                    <tr key={r.id} className="odd:bg-white even:bg-slate-100 hover:bg-slate-200 cursor-pointer" onClick={() => setSelectedReport(r)}>
                       <td className="px-3 py-3 align-top align-middle">
                         <div className="font-medium text-slate-900 whitespace-nowrap">{r.name}</div>
                       </td>
@@ -608,7 +608,7 @@ export default function AdminPage() {
                   <button
                     key={r.id}
                     onClick={() => setSelectedReport(r)}
-                    className="w-full text-left bg-white even:bg-slate-50 border border-slate-100 rounded-lg p-3 shadow-sm flex items-start justify-between gap-3"
+                    className="w-full text-left bg-white even:bg-slate-100 border border-slate-200 rounded-lg p-3 shadow-sm flex items-start justify-between gap-3"
                   >
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-slate-900 whitespace-nowrap">{r.name}</div>
