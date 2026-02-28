@@ -251,8 +251,13 @@ export default function AdminPage() {
             name: row.full_name || row.name || selectedReport.name,
             phone: row.phone || selectedReport.phone,
             request_ip: row.request_ip || selectedReport.request_ip,
+            // keep department and location fields
+            dept_name: row.dept_name || selectedReport.dept_name,
             dept_building: row.dept_building || selectedReport.dept_building,
             dept_floor: row.dept_floor || selectedReport.dept_floor,
+            // device info should also be preserved
+            device: row.device || selectedReport.device,
+            device_id: row.device_id || selectedReport.device_id,
             handler_id: row.handler_id || selectedReport.handler_id,
             handler_tag: row.handler_tag || selectedReport.handler_tag,
             notes: row.notes || selectedReport.notes,
@@ -260,8 +265,8 @@ export default function AdminPage() {
             reject_reason: row.reject_reason ?? updatedReportData.reject_reason ?? null,
             created_at: row.created_at || selectedReport.created_at,
             updated_at: row.updated_at || new Date().toISOString(),
-            issue: row.issue || selectedReport.issue,           // Add this
-            status: newStatus,                                    // Add this
+            issue: row.issue || selectedReport.issue,
+            status: newStatus,
           };
 
           setSelectedReport(mapped);
@@ -560,7 +565,7 @@ export default function AdminPage() {
                 {filteredReports.map((r) => {
                   const cfg = getStatusConfig(r.status);
                   return (
-                    <tr key={r.id} className="hover:bg-slate-50 even:bg-slate-50 cursor-pointer" onClick={() => setSelectedReport(r)}>
+                    <tr key={r.id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100 cursor-pointer" onClick={() => setSelectedReport(r)}>
                       <td className="px-3 py-3 align-top align-middle">
                         <div className="font-medium text-slate-900 whitespace-nowrap">{r.name}</div>
                       </td>
@@ -603,7 +608,7 @@ export default function AdminPage() {
                   <button
                     key={r.id}
                     onClick={() => setSelectedReport(r)}
-                    className="w-full text-left bg-white border border-slate-100 rounded-lg p-3 shadow-sm flex items-start justify-between gap-3"
+                    className="w-full text-left bg-white even:bg-slate-50 border border-slate-100 rounded-lg p-3 shadow-sm flex items-start justify-between gap-3"
                   >
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-slate-900 whitespace-nowrap">{r.name}</div>

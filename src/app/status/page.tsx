@@ -95,6 +95,25 @@ function StatusPageContent() {
   const [loading, setLoading] = useState(true);
   const [lastSync, setLastSync] = useState<Date | null>(null);
 
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("lastReport");
+      if (raw) {
+        const parsed = JSON.parse(raw) as RepairStatus;
+        if (parsed && parsed.jobId) {
+          setResults((prev) => {
+            if (prev.find((r) => r.jobId === parsed.jobId)) return prev;
+            return [parsed, ...prev];
+          });
+        }
+        // clear it so it doesn't reappear on subsequent refreshes
+        sessionStorage.removeItem("lastReport");
+      }
+    } catch (e) {
+      console.warn("Could not read lastReport from sessionStorage", e);
+    }
+  }, []);
+
 
   const filteredResults = React.useMemo(() => {
     let base = results;
