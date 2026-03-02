@@ -12,7 +12,7 @@ const supabaseAdmin = createClient(String(url), String(serviceKey), { auth: { pe
 export async function POST(req: NextRequest) {
   try {
     const headerCandidates = [
-      "x-internal-ip",
+      "x-internal-ip",        // ← อันนี้เราต้องให้ proxy/บริการกรอก
       "x-remote-ip",
       "x-real-ip",
       "x-forwarded-for",
