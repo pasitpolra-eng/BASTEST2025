@@ -18,6 +18,8 @@ type RepairStatus = {
   status: "pending" | "in-progress" | "completed" | "rejected";
   createdAt: string;
   updatedAt: string;
+  // recorded IP address (possibly TightVNC internal)
+  requestIp?: string;
   notes?: string;
   reject_reason?: string | null;
   handler_tag?: string | null;
@@ -37,6 +39,8 @@ type DatabaseItem = {
   status: string;
   created_at: string;
   updated_at: string;
+  // IP address logged at submission (snake_case from DB)
+  request_ip?: string;
   notes?: string;
   reject_reason?: string | null;
   handler_tag?: string | null;
@@ -182,6 +186,7 @@ function StatusPageContent() {
           updatedAt: item.updated_at
             ? new Date(item.updated_at).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
             : "",
+          requestIp: item.request_ip || undefined,
           notes: item.notes,
           reject_reason: item.reject_reason,
           handler_tag: item.handler_tag,
@@ -236,6 +241,7 @@ function StatusPageContent() {
         updatedAt: item.updated_at
           ? new Date(item.updated_at).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
           : "",
+        requestIp: item.request_ip || undefined,
         notes: item.notes,
         reject_reason: item.reject_reason,
         handler_tag: item.handler_tag,
@@ -515,6 +521,12 @@ function StatusPageContent() {
                           <span className="mx-1 text-gray-400">•</span>
                           <span>{result.deviceId}</span>
                         </div>
+
+                        {result.requestIp && (
+                          <div className="mt-1 text-xs text-gray-500 font-mono truncate">
+                            IP: {result.requestIp}
+                          </div>
+                        )}
 
                         <div className="mt-1 text-xs text-gray-600 truncate">
                           {result.fullName && <span>{result.fullName}</span>}

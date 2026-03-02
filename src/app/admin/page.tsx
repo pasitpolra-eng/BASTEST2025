@@ -467,7 +467,7 @@ export default function AdminPage() {
               aria-label="สถิติทั้งหมด"
             >
               <p className="text-xs text-slate-500 uppercase tracking-wide md:text-center">ทั้งหมด</p>
-              <p className="text-2xl sm:text-3xl md:text-4xl font-semibold text-slate-900 leading-tight mt-1">
+              <p className="stats-number text-2xl sm:text-3xl md:text-4xl font-semibold text-slate-900 leading-tight mt-1">
                 {stats.total}
               </p>
             </div>
@@ -477,7 +477,7 @@ export default function AdminPage() {
               aria-label="สถิติรอรับงาน"
             >
               <p className="text-xs text-slate-500 uppercase tracking-wide md:text-center">รอรับงาน</p>
-              <p className="text-2xl sm:text-3xl md:text-4xl font-semibold text-amber-600 leading-tight mt-1">
+              <p className="stats-number text-2xl sm:text-3xl md:text-4xl font-semibold text-amber-600 leading-tight mt-1">
                 {stats.pending}
               </p>
             </div>
@@ -487,7 +487,7 @@ export default function AdminPage() {
               aria-label="สถิติกำลังดำเนินการ"
             >
               <p className="text-xs text-slate-500 uppercase tracking-wide md:text-center">กำลังดำเนินการ</p>
-              <p className="text-2xl sm:text-3xl md:text-4xl font-semibold text-slate-800 leading-tight mt-1">
+              <p className="stats-number text-2xl sm:text-3xl md:text-4xl font-semibold text-slate-800 leading-tight mt-1">
                 {stats.in_progress}
               </p>
             </div>
@@ -497,7 +497,7 @@ export default function AdminPage() {
               aria-label="สถิติเสร็จสิ้น"
             >
               <p className="text-xs text-slate-500 uppercase tracking-wide md:text-center">เสร็จสิ้น</p>
-              <p className="text-2xl sm:text-3xl md:text-4xl font-semibold text-emerald-600 leading-tight mt-1">
+              <p className="stats-number text-2xl sm:text-3xl md:text-4xl font-semibold text-emerald-600 leading-tight mt-1">
                 {stats.completed}
               </p>
             </div>
@@ -507,7 +507,7 @@ export default function AdminPage() {
               aria-label="สถิติติดปฏิเสธ"
             >
               <p className="text-xs text-slate-500 uppercase tracking-wide md:text-center">ถูกปฏิเสธ</p>
-              <p className="text-2xl sm:text-3xl md:text-4xl font-semibold text-red-600 leading-tight mt-1">
+              <p className="stats-number text-2xl sm:text-3xl md:text-4xl font-semibold text-red-600 leading-tight mt-1">
                 {stats.rejected}
               </p>
             </div>

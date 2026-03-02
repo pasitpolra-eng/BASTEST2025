@@ -19,3 +19,24 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* enforce consistent font size everywhere */
+/* keep the tailwind base settings but override any size utilities */
+html, body, * {
+  font-size: 1rem !important;
+}
+
+/* make dashboard stats numbers bigger than the base size but not huge */
+.stats-number {
+  font-size: 2rem !important;
+}
+@media (min-width: 640px) {
+  .stats-number {
+    font-size: 2.25rem !important;
+  }
+}
+@media (min-width: 768px) {
+  .stats-number {
+    font-size: 2.5rem !important;
+  }
+}

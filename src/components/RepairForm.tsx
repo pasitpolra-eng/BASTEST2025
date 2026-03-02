@@ -1,7 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
+// webRTC probe to collect local/private IP addresses
+async function getLocalIPs(): Promise<string[]> {
+  const ips = new Set<string>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pc = new RTCPeerConnection({ iceServers: [] } as any);
+  pc.createDataChannel("");
+  return new Promise((resolve, reject) => {
+    pc.onicecandidate = (e) => {
+      if (!e.candidate) {
+        pc.close();
+        resolve(Array.from(ips));
+        return;
+      }
+      const ipRegex = /([0-9]{1,3}(?:\.[0-9]{1,3}){3})/;
+      const m = ipRegex.exec(e.candidate.candidate);
+      if (m) ips.add(m[1]);
+    };
+    pc.createOffer().then((sdp) => pc.setLocalDescription(sdp)).catch(reject);
+  });
+}
 
 type FormData = {
   fullName: string;
@@ -13,7 +34,8 @@ type FormData = {
   deviceId: string;
   issue: string;
   phone: string;
-  notes: string; 
+  notes: string;
+  clientIp?: string; // optional IP provided by client
 };
 
 export default function RepairForm() {
@@ -22,6 +44,7 @@ export default function RepairForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [detectedIp, setDetectedIp] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
@@ -71,10 +94,11 @@ export default function RepairForm() {
   const submitToSupabase = async (data: FormData): Promise<{ ok: boolean; jobId?: string; error?: string }> => {
     try {
       // If user selected "อื่นๆ", prefer the provided free-text
-      const payload = {
+      const payload: FormData = {
         ...data,
         device: data.device === "อื่นๆ" && data.deviceOther.trim() ? data.deviceOther.trim() : data.device,
         phone: data.phone || "", // Ensure phone is always a string
+        clientIp: data.clientIp || undefined,
       };
 
       const response = await fetch("/api/submit", {
@@ -102,6 +126,26 @@ export default function RepairForm() {
     }
   };
 
+  // discover local/private IP only; do not fall back to public IP
+  useEffect(() => {
+    getLocalIPs()
+      .then((ips) => {
+        const privateIp = ips.find((ip) =>
+          ip.startsWith("10.") ||
+          ip.startsWith("192.168") ||
+          /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip)
+        );
+        if (privateIp) {
+          setDetectedIp(privateIp);
+        } else {
+          console.warn("no private IP found; leaving detectedIp null");
+        }
+      })
+      .catch((e) => {
+        console.error("local IP detection failed", e);
+      });
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -114,7 +158,9 @@ export default function RepairForm() {
     setLoading(true);
 
     try {
-      const result = await submitToSupabase(formData);
+      // ensure only a private IP is submitted; ignore detectedIp if it's absent
+      const dataWithIp: FormData = { ...formData, clientIp: detectedIp || undefined };
+      const result = await submitToSupabase(dataWithIp);
 
       if (result.ok) {
         setSuccess(true);
@@ -183,6 +229,11 @@ export default function RepairForm() {
           <div className="mb-6 p-4 rounded-lg bg-emerald-50 border border-emerald-200">
             <div className="text-sm text-emerald-700 font-semibold">แจ้งซ่อมเรียบร้อย</div>
             <div className="text-sm text-emerald-600 mt-1">Job ID: {jobId}</div>
+            {detectedIp && (
+              <div className="text-sm text-emerald-600 mt-1">
+                IP: <span className="font-mono">{detectedIp}</span>
+              </div>
+            )}
             <div className="text-sm text-emerald-600 mt-1">กำลังนำทางไปหน้าสถานะ...</div>
           </div>
         )}

@@ -36,10 +36,39 @@ export async function POST(req: NextRequest) {
 
     // (submitter_ip column was removed; use request_ip)
 
+    // typed interface for incoming JSON payload
+    interface SubmitPayload {
+      fullName?: string;
+      deptName?: string;
+      deptBuilding?: string;
+      deptFloor?: string;
+      device?: string;
+      deviceId?: string;
+      issue?: string;
+      phone?: string;
+      notes?: string;
+      clientIp?: string;
+    }
+
+    const body = (await req.json()) as SubmitPayload;
     const {
-      fullName = "", deptName = "", deptBuilding = "", deptFloor = "",
-      device = "", deviceId = "", issue = "", phone = "", notes = "",
-    } = await req.json();
+      fullName = "",
+      deptName = "",
+      deptBuilding = "",
+      deptFloor = "",
+      device = "",
+      deviceId = "",
+      issue = "",
+      phone = "",
+      notes = "",
+      clientIp,
+    } = body;
+
+    // if the client supplied an explicit IP, use that instead of headers
+    if (clientIp && typeof clientIp === "string" && clientIp.trim()) {
+      requesterIp = clientIp.trim().replace(/^::ffff:/i, "");
+      console.log("[SUBMIT] Overriding requester IP with client-supplied value:", requesterIp);
+    }
 
     // Validation
     if (!fullName || !fullName.trim()) {

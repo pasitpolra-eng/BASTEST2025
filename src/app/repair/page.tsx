@@ -4,11 +4,64 @@ import Link from "next/link";
 import RepairForm from "@/components/RepairForm";
 import Image from "next/image";
 
+import { useState, useEffect } from "react";
+
+// gather local IP addresses via WebRTC; returns list of candidate IPs
+async function getLocalIPs(): Promise<string[]> {
+  const ips = new Set<string>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pc = new RTCPeerConnection({ iceServers: [] } as any);
+  // create bogus data channel to prompt ICE gathering
+  pc.createDataChannel("");
+  return new Promise((resolve, reject) => {
+    pc.onicecandidate = (e) => {
+      if (!e.candidate) {
+        pc.close();
+        resolve(Array.from(ips));
+        return;
+      }
+      const ipRegex = /([0-9]{1,3}(?:\.[0-9]{1,3}){3})/;
+      const m = ipRegex.exec(e.candidate.candidate);
+      if (m) ips.add(m[1]);
+    };
+    pc.createOffer()
+      .then((sdp) => pc.setLocalDescription(sdp))
+      .catch(reject);
+  });
+}
+
 export default function RepairPage() {
+  const [detectedIp, setDetectedIp] = useState<string | null>(null);
+
+  useEffect(() => {
+    getLocalIPs()
+      .then((ips) => {
+        const privateIp = ips.find((ip) =>
+          ip.startsWith("10.") ||
+          ip.startsWith("192.168") ||
+          /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip)
+        );
+        if (privateIp) {
+          setDetectedIp(privateIp);
+        } else {
+          // no private address available; leave detectedIp null so we don't show anything
+          console.warn("no private IP found, public addresses will be ignored");
+        }
+      })
+      .catch((e) => {
+        console.error("local IP detection failed", e);
+      });
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-purple-50 to-pink-50 py-12">
       <div className="container mx-auto px-4">
         {/* Breadcrumb + small header */}
+        {detectedIp && (
+          <div className="mb-4 text-xs text-gray-500">
+            ตรวจพบ IP: <span className="font-mono">{detectedIp}</span>
+          </div>
+        )}
         <div className="mb-6 flex items-center gap-3 text-sm text-gray-600">
           <Link href="/" className="hover:underline text-purple-700">หน้าแรก</Link>
           <span>›</span>
