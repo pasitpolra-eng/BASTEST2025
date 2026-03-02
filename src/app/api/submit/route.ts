@@ -11,13 +11,28 @@ const supabaseAdmin = createClient(String(url), String(serviceKey), { auth: { pe
 
 export async function POST(req: NextRequest) {
   try {
-    // pull the remote IP from headers (x-forwarded-for when behind a proxy)
-    const ipHeader = req.headers.get("x-forwarded-for")
-      || req.headers.get("x-real-ip");
-    let requesterIp = ipHeader ? ipHeader.split(",")[0].trim() : "unknown";
+    const headerCandidates = [
+      "x-internal-ip",
+      "x-remote-ip",
+      "x-real-ip",
+      "x-forwarded-for",
+      "x-cluster-client-ip",
+      "cf-connecting-ip",
+      "true-client-ip",
+    ];
+
+    let requesterIp = "unknown";
+    for (const h of headerCandidates) {
+      const v = req.headers.get(h);
+      if (v) {
+        requesterIp = v.split(",")[0].trim();
+        break;
+      }
+    }
+
     // strip IPv6-mapped IPv4 prefix if present
     requesterIp = requesterIp.replace(/^::ffff:/i, "");
-    console.log("[SUBMIT] Requester IP:", requesterIp);
+    console.log("[SUBMIT] Requester IP:", requesterIp, "(from headers checked:", headerCandidates.join(","), ")");
 
     // (submitter_ip column was removed; use request_ip)
 
